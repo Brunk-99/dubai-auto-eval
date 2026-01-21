@@ -136,19 +136,24 @@ export default async function handler(req, res) {
         const data = await response.json();
         console.log(`[Analyze] SUCCESS with model: ${model}`);
 
-        // Robustes JSON-Parsing: Entferne eventuelle Einleitungstexte
+        // Extrem sicheres JSON-Parsing: Extrahiere NUR das JSON-Objekt
         if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
-          let text = data.candidates[0].content.parts[0].text;
-          // Versuche JSON zu extrahieren, falls Einleitungstext vorhanden
-          const jsonMatch = text.match(/\{[\s\S]*\}/);
-          if (jsonMatch) {
+          const rawText = data.candidates[0].content.parts[0].text;
+          const startBracket = rawText.indexOf('{');
+          const endBracket = rawText.lastIndexOf('}');
+
+          if (startBracket !== -1 && endBracket !== -1 && endBracket > startBracket) {
+            const jsonString = rawText.substring(startBracket, endBracket + 1);
             try {
-              const parsed = JSON.parse(jsonMatch[0]);
+              const parsed = JSON.parse(jsonString);
               data.candidates[0].content.parts[0].text = JSON.stringify(parsed);
               console.log('[Analyze] JSON erfolgreich extrahiert und bereinigt');
             } catch (e) {
-              console.log('[Analyze] JSON bereits valide oder Parsing nicht nötig');
+              console.warn('[Analyze] JSON-Parsing fehlgeschlagen, sende Rohtext:', e.message);
+              // Rohtext beibehalten, Frontend kann damit umgehen
             }
+          } else {
+            console.warn('[Analyze] Kein gültiges JSON-Format gefunden in Antwort');
           }
         }
 
