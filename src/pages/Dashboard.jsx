@@ -318,8 +318,15 @@ function VehicleCard({ vehicle, settings, isAdmin, currentUser, onClick }) {
     ? (vehicle.reviews || []).find(r => r.mechanicId === currentUser?.id)
     : null;
 
+  // Card styling based on review status (for mechanics)
+  const cardClassName = !isAdmin
+    ? myReview
+      ? 'flex gap-3 border-l-4 border-l-green-500 bg-green-50/30'
+      : 'flex gap-3 border-l-4 border-l-orange-500 bg-orange-50/30'
+    : 'flex gap-3';
+
   return (
-    <Card onClick={onClick} className="flex gap-3">
+    <Card onClick={onClick} className={cardClassName}>
       {/* Thumbnail */}
       <div className="w-20 h-20 flex-shrink-0 bg-gray-100 rounded-xl overflow-hidden relative">
         {thumbnail ? (

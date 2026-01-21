@@ -185,7 +185,7 @@ export default function VehicleDetails() {
             {userIsAdmin ? (
               <AdminReviewsTab vehicle={vehicle} onUpdate={updateVehicle} />
             ) : (
-              <MechanicReviewTab vehicle={vehicle} onUpdate={updateVehicle} currentUser={currentUser} />
+              <MechanicReviewTab vehicle={vehicle} onUpdate={updateVehicle} currentUser={currentUser} navigate={navigate} />
             )}
           </TabsContent>
 
@@ -828,7 +828,7 @@ function AdminReviewsTab({ vehicle, onUpdate }) {
 }
 
 // ============ MECHANIC REVIEW TAB ============
-function MechanicReviewTab({ vehicle, onUpdate, currentUser }) {
+function MechanicReviewTab({ vehicle, onUpdate, currentUser, navigate }) {
   // Find this mechanic's review
   const myReview = (vehicle.reviews || []).find(r => r.mechanicId === currentUser?.id);
 
@@ -838,6 +838,7 @@ function MechanicReviewTab({ vehicle, onUpdate, currentUser }) {
     comment: myReview?.comment || '',
   });
   const [saving, setSaving] = useState(false);
+  const [showToast, setShowToast] = useState(false);
 
   const handleSubmit = async () => {
     if (!form.recommendation) {
@@ -868,11 +869,14 @@ function MechanicReviewTab({ vehicle, onUpdate, currentUser }) {
       }
 
       await onUpdate({ reviews: updatedReviews });
-      alert('Bewertung gespeichert!');
+      // Show toast and navigate to dashboard
+      setShowToast(true);
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 1500);
     } catch (error) {
       console.error('Save failed:', error);
       alert('Speichern fehlgeschlagen');
-    } finally {
       setSaving(false);
     }
   };
@@ -977,6 +981,18 @@ function MechanicReviewTab({ vehicle, onUpdate, currentUser }) {
         <p>Deine Bewertung ist nur für Admins sichtbar.</p>
         <p>Andere Mechaniker können deine Bewertung nicht sehen.</p>
       </div>
+
+      {/* Success Toast */}
+      {showToast && (
+        <div className="fixed bottom-20 left-1/2 transform -translate-x-1/2 z-50">
+          <div className="bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-2">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+            <span className="font-medium">Bewertung gespeichert!</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
