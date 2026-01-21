@@ -86,7 +86,7 @@ export default async function handler(req, res) {
 
     const partCount = contents[0]?.parts?.length || 0;
     console.log(`[Analyze] Processing request with ${partCount} parts...`);
-    console.log(`[Analyze] Using HIGH-END model: ${VERTEX_MODEL}`);
+    console.log(`[Analyze] Pro-Switch Strategy: ${VERTEX_MODELS.join(' -> ')}`);
 
     // Google Auth mit Service Account Credentials aus Environment
     let auth;
