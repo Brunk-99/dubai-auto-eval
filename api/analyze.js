@@ -7,8 +7,9 @@ import { GoogleAuth } from 'google-auth-library';
 const VERTEX_PROJECT = process.env.VERTEX_PROJECT || 'dubai-car-check';
 const VERTEX_LOCATION = process.env.VERTEX_LOCATION || 'us-central1';
 // Gemini 3.0 Pro als Primary, Gemini 2.5 Pro als Fallback
-const VERTEX_MODEL_PRIMARY = 'gemini-3.0-pro';
-const VERTEX_MODEL_FALLBACK = 'gemini-2.5-pro-preview-05-06';
+// Wichtig: -001 Suffix für stabile Modell-IDs
+const VERTEX_MODEL_PRIMARY = 'gemini-3.0-pro-001';
+const VERTEX_MODEL_FALLBACK = 'gemini-2.5-pro-001';
 
 // Wechselkurs EUR/AED
 const EUR_AED_RATE = 4.00;
@@ -47,9 +48,9 @@ Gib die Antwort STRENG als JSON aus mit folgendem Schema:
 
 Wichtig: Antworte NUR im JSON-Format ohne zusätzlichen Text.`;
 
-// Vertex AI URL Generator
+// Vertex AI URL Generator - v1beta1 für neue Modelle (3.0/2.5)
 const getVertexUrl = (model) =>
-  `https://${VERTEX_LOCATION}-aiplatform.googleapis.com/v1/projects/${VERTEX_PROJECT}/locations/${VERTEX_LOCATION}/publishers/google/models/${model}:generateContent`;
+  `https://${VERTEX_LOCATION}-aiplatform.googleapis.com/v1beta1/projects/${VERTEX_PROJECT}/locations/${VERTEX_LOCATION}/publishers/google/models/${model}:generateContent`;
 
 export default async function handler(req, res) {
   // CORS Headers
@@ -135,6 +136,23 @@ export default async function handler(req, res) {
       if (response.ok) {
         const data = await response.json();
         console.log(`[Analyze] SUCCESS with model: ${model}`);
+
+        // Robustes JSON-Parsing: Entferne eventuelle Einleitungstexte
+        if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
+          let text = data.candidates[0].content.parts[0].text;
+          // Versuche JSON zu extrahieren, falls Einleitungstext vorhanden
+          const jsonMatch = text.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            try {
+              const parsed = JSON.parse(jsonMatch[0]);
+              data.candidates[0].content.parts[0].text = JSON.stringify(parsed);
+              console.log('[Analyze] JSON erfolgreich extrahiert und bereinigt');
+            } catch (e) {
+              console.log('[Analyze] JSON bereits valide oder Parsing nicht nötig');
+            }
+          }
+        }
+
         return res.status(200).json(data);
       }
 
