@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getAllVehicles, getCostDefaults } from '../lib/storage';
-import { getAmpelStatus, calculateCosts, getReviewConsensus } from '../lib/calculations';
+import { getAmpelStatus, calculateCosts, getReviewConsensus, aedToEur } from '../lib/calculations';
 import { formatCurrency, formatMileage, STATUS_LABELS, STATUS_COLORS } from '../lib/formatters';
 import { isAdmin, getCurrentUser, clearCurrentUser } from '../lib/auth';
 import Header from '../components/Header';
@@ -383,12 +383,12 @@ function VehicleCard({ vehicle, settings, isAdmin, currentUser, onClick }) {
         {isAdmin && (
           <div className="flex items-center justify-between mt-2 text-sm">
             <div className="flex items-center gap-3">
-              {/* Start Bid (AED) */}
+              {/* Start Bid (converted to EUR) */}
               {(vehicle.startBid || vehicle.finalBid) > 0 && (
                 <div>
                   <span className="text-xs text-gray-400">Start: </span>
                   <span className="font-medium text-gray-700">
-                    {formatCurrency(vehicle.finalBid || vehicle.startBid, 'AED')}
+                    {formatCurrency(aedToEur(vehicle.finalBid || vehicle.startBid))}
                   </span>
                 </div>
               )}
