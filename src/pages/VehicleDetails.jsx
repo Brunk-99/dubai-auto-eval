@@ -130,7 +130,10 @@ export default function VehicleDetails() {
             <div className="text-right">
               <p className="text-xs text-gray-500 mb-1">Max. Gebot</p>
               <p className="text-lg font-bold text-blue-600">
-                {formatCurrency(costs.maxBid)}
+                {formatCurrency(costs.maxBidAED, 'AED')}
+              </p>
+              <p className="text-xs text-gray-400">
+                ({formatCurrency(costs.maxBid)})
               </p>
             </div>
           ) : (
@@ -1055,9 +1058,47 @@ function CostsTab({ vehicle, costs, settings }) {
           <p className="text-sm text-blue-600 mb-1">Empfohlenes Maximalgebot</p>
           <p className="text-3xl font-bold text-blue-700">{formatCurrency(costs.maxBidAED, 'AED')}</p>
           <p className="text-lg text-blue-600">({formatCurrency(costs.maxBid)})</p>
-          <p className="text-xs text-blue-500 mt-2">
-            Bei Zielprofit von {costs.targetProfitPct}% + {formatCurrency(settings.safetyDeduction)} Sicherheit
-          </p>
+        </div>
+
+        {/* Calculation breakdown */}
+        <div className="mt-4 pt-4 border-t border-blue-200 text-xs text-blue-700 space-y-1">
+          <p className="font-semibold mb-2">Berechnung:</p>
+          <div className="flex justify-between">
+            <span>Vergleichspreis DE</span>
+            <span>{formatCurrency(costs.marketPrice)}</span>
+          </div>
+          <div className="flex justify-between">
+            <span>- Zielprofit ({costs.targetProfitPct}%)</span>
+            <span>-{formatCurrency(costs.targetProfit)}</span>
+          </div>
+          <div className="flex justify-between">
+            <span>- Sicherheitsabschlag</span>
+            <span>-{formatCurrency(costs.safetyDeduction)}</span>
+          </div>
+          <div className="flex justify-between">
+            <span>- Transport</span>
+            <span>-{formatCurrency(costs.transportCost)}</span>
+          </div>
+          <div className="flex justify-between">
+            <span>- TÜV/Zulassung</span>
+            <span>-{formatCurrency(costs.tuvCost)}</span>
+          </div>
+          <div className="flex justify-between">
+            <span>- Sonstiges</span>
+            <span>-{formatCurrency(costs.miscCost)}</span>
+          </div>
+          <div className="flex justify-between">
+            <span>- Reparatur (gepuffert)</span>
+            <span>-{formatCurrency(costs.repairBuffered)}</span>
+          </div>
+          <div className="flex justify-between pt-2 border-t border-blue-200 font-semibold">
+            <span>Verfügbar für Kauf inkl. Zoll/MwSt</span>
+            <span>{formatCurrency(costs.marketPrice - costs.targetProfit - costs.safetyDeduction - costs.otherCosts)}</span>
+          </div>
+          <div className="flex justify-between">
+            <span>÷ 1,309 (Zoll 10% + MwSt 19%)</span>
+            <span>= {formatCurrency(costs.maxBid)}</span>
+          </div>
         </div>
       </Card>
 
