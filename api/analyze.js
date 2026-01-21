@@ -7,8 +7,12 @@ import { GoogleAuth } from 'google-auth-library';
 const VERTEX_PROJECT = process.env.VERTEX_PROJECT || 'dubai-car-check';
 const VERTEX_LOCATION = process.env.VERTEX_LOCATION || 'us-central1';
 
-// NUR High-End Modelle - KEIN Fallback auf Flash/Lite
-const VERTEX_MODEL = 'gemini-3-pro-preview';
+// High-End Pro-Modelle - KEIN Fallback auf Flash/Lite!
+// Priority: 2.5 Pro (neueste) -> 1.5 Pro (bewährt, immer verfügbar)
+const VERTEX_MODELS = [
+  'gemini-2.5-pro-001',   // Neueste Pro-Version (Beta)
+  'gemini-1.5-pro-002'    // Bewährte Pro-Version (stabil)
+];
 
 // Retry Configuration
 const MAX_RETRIES = 5;
@@ -147,109 +151,105 @@ export default async function handler(req, res) {
       ],
     };
 
-    const url = getVertexUrl(VERTEX_MODEL);
+    // PRO-SWITCH: Versuche Modelle der Reihe nach (2.5 Pro -> 1.5 Pro)
+    // Innerhalb jedes Modells: Aggressive Retry bei 429
+    for (const currentModel of VERTEX_MODELS) {
+      const url = getVertexUrl(currentModel);
+      console.log(`[Analyze] Trying HIGH-END model: ${currentModel}`);
 
-    // AGGRESSIVE RETRY LOOP - Wir bleiben hartnäckig bei High-End Modellen
-    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-      console.log(`[Analyze] Attempt ${attempt}/${MAX_RETRIES} with model: ${VERTEX_MODEL}`);
+      // AGGRESSIVE RETRY LOOP für aktuelles Modell
+      for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+        console.log(`[Analyze] Attempt ${attempt}/${MAX_RETRIES} with model: ${currentModel}`);
 
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${accessToken.token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody),
-      });
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${accessToken.token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(requestBody),
+        });
 
-      // SUCCESS - Verarbeite Antwort
-      if (response.ok) {
-        const data = await response.json();
-        console.log(`[Analyze] SUCCESS with model: ${VERTEX_MODEL} on attempt ${attempt}`);
+        // SUCCESS - Verarbeite Antwort
+        if (response.ok) {
+          const data = await response.json();
+          console.log(`[Analyze] SUCCESS with model: ${currentModel} on attempt ${attempt}`);
 
-        // Extrem sicheres JSON-Parsing
-        if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
-          const rawText = data.candidates[0].content.parts[0].text;
-          console.log('[Analyze] RAW KI ANSWER:', rawText.substring(0, 500) + (rawText.length > 500 ? '...' : ''));
+          // Extrem sicheres JSON-Parsing
+          if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
+            const rawText = data.candidates[0].content.parts[0].text;
+            console.log('[Analyze] RAW KI ANSWER:', rawText.substring(0, 500) + (rawText.length > 500 ? '...' : ''));
 
-          const startBracket = rawText.indexOf('{');
-          const endBracket = rawText.lastIndexOf('}');
+            const startBracket = rawText.indexOf('{');
+            const endBracket = rawText.lastIndexOf('}');
 
-          if (startBracket !== -1 && endBracket !== -1 && endBracket > startBracket) {
-            const jsonString = rawText.substring(startBracket, endBracket + 1);
-            try {
-              const parsed = JSON.parse(jsonString);
-              data.candidates[0].content.parts[0].text = JSON.stringify(parsed);
-              console.log('[Analyze] JSON erfolgreich extrahiert und bereinigt');
-            } catch (e) {
-              console.warn('[Analyze] JSON-Parsing fehlgeschlagen, sende Rohtext:', e.message);
+            if (startBracket !== -1 && endBracket !== -1 && endBracket > startBracket) {
+              const jsonString = rawText.substring(startBracket, endBracket + 1);
+              try {
+                const parsed = JSON.parse(jsonString);
+                data.candidates[0].content.parts[0].text = JSON.stringify(parsed);
+                console.log('[Analyze] JSON erfolgreich extrahiert und bereinigt');
+              } catch (e) {
+                console.warn('[Analyze] JSON-Parsing fehlgeschlagen, sende Rohtext:', e.message);
+              }
             }
           }
+
+          // Erfolg - Modell-Info mitgeben
+          return res.status(200).json({
+            ...data,
+            _meta: {
+              model: currentModel,
+              attempt: attempt,
+              status: 'success'
+            }
+          });
         }
 
-        // Erfolg - Modell-Info mitgeben
-        return res.status(200).json({
-          ...data,
-          _meta: {
-            model: VERTEX_MODEL,
-            attempt: attempt,
-            status: 'success'
+        // ERROR - Analysiere Fehlertyp
+        const errorData = await response.json().catch(() => ({ error: { message: `HTTP ${response.status}` } }));
+        const errorMsg = errorData.error?.message || '';
+        const statusCode = response.status;
+
+        console.warn(`[Analyze] Attempt ${attempt} failed:`, statusCode, errorMsg);
+
+        // Model not found (404) - Wechsle zum nächsten Pro-Modell
+        if (statusCode === 404 || errorMsg.includes('not found') || errorMsg.includes('does not have access')) {
+          console.log(`[Analyze] Model ${currentModel} not available. Trying next Pro model...`);
+          break; // Breche Retry-Loop ab, wechsle zum nächsten Modell
+        }
+
+        // 429 Resource Exhausted - RETRY mit Backoff (beim GLEICHEN Modell bleiben!)
+        if (statusCode === 429 || errorMsg.includes('429') || errorMsg.includes('RESOURCE_EXHAUSTED') || errorMsg.includes('quota')) {
+          if (attempt < MAX_RETRIES) {
+            const waitTime = BASE_WAIT_MS * attempt; // 5s, 10s, 15s, 20s, 25s
+            console.log(`[Analyze] 429 Quota exhausted. Waiting ${waitTime/1000}s before retry...`);
+            console.log(`[Analyze] STATUS: retrying - High-End Modell ausgelastet. Warte auf freien Slot (Versuch ${attempt}/${MAX_RETRIES})...`);
+
+            await sleep(waitTime);
+            continue; // Nächster Versuch mit gleichem Modell
           }
-        });
-      }
+          // Nach 5 Versuchen: Wechsle zum nächsten Modell
+          console.log(`[Analyze] 429 after ${MAX_RETRIES} attempts. Trying next Pro model...`);
+          break;
+        }
 
-      // ERROR - Analysiere Fehlertyp
-      const errorData = await response.json().catch(() => ({ error: { message: `HTTP ${response.status}` } }));
-      const errorMsg = errorData.error?.message || '';
-      const statusCode = response.status;
-
-      console.warn(`[Analyze] Attempt ${attempt} failed:`, statusCode, errorMsg);
-
-      // 429 Resource Exhausted - RETRY mit Backoff
-      if (statusCode === 429 || errorMsg.includes('429') || errorMsg.includes('RESOURCE_EXHAUSTED') || errorMsg.includes('quota')) {
+        // Andere Fehler - Retry versuchen
         if (attempt < MAX_RETRIES) {
-          const waitTime = BASE_WAIT_MS * attempt; // 5s, 10s, 15s, 20s, 25s
-          console.log(`[Analyze] 429 Quota exhausted. Waiting ${waitTime/1000}s before retry...`);
-
-          // Sende "retrying" Status ans Frontend (für Polling)
-          // Bei synchronem Request können wir das nicht direkt, aber wir loggen es
-          console.log(`[Analyze] STATUS: retrying - High-End Modell ausgelastet. Warte auf freien Slot (Versuch ${attempt}/${MAX_RETRIES})...`);
-
+          const waitTime = BASE_WAIT_MS * attempt;
+          console.log(`[Analyze] Error ${statusCode}. Waiting ${waitTime/1000}s before retry...`);
           await sleep(waitTime);
-          continue; // Nächster Versuch
+          continue;
         }
       }
-
-      // Model not found - Kein Retry, sofort Fehler
-      if (errorMsg.includes('not found') || errorMsg.includes('does not have access')) {
-        console.error(`[Analyze] Model ${VERTEX_MODEL} not available:`, errorMsg);
-        return res.status(503).json({
-          error: `High-End Modell ${VERTEX_MODEL} nicht verfügbar. Bitte später erneut versuchen.`,
-          status: 'model_unavailable',
-          _meta: { model: VERTEX_MODEL, attempt }
-        });
-      }
-
-      // Andere Fehler - Auch retry versuchen
-      if (attempt < MAX_RETRIES) {
-        const waitTime = BASE_WAIT_MS * attempt;
-        console.log(`[Analyze] Error ${statusCode}. Waiting ${waitTime/1000}s before retry...`);
-        await sleep(waitTime);
-        continue;
-      }
-
-      // Alle Retries aufgebraucht
-      return res.status(statusCode || 500).json({
-        error: errorMsg || 'Vertex AI Fehler nach mehreren Versuchen',
-        status: 'failed_after_retries',
-        _meta: { model: VERTEX_MODEL, attempts: attempt }
-      });
     }
 
-    // Sollte nie erreicht werden
-    return res.status(500).json({
-      error: 'Unerwarteter Fehler im Retry-Loop',
-      status: 'unexpected_error'
+    // Alle Pro-Modelle fehlgeschlagen
+    console.error('[Analyze] All Pro models failed');
+    return res.status(503).json({
+      error: 'Alle High-End Modelle (2.5 Pro, 1.5 Pro) sind derzeit nicht verfügbar. Bitte später erneut versuchen.',
+      status: 'all_models_failed',
+      _meta: { models_tried: VERTEX_MODELS }
     });
 
   } catch (error) {
