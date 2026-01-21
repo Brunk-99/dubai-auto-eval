@@ -379,14 +379,26 @@ function VehicleCard({ vehicle, settings, isAdmin, currentUser, onClick }) {
           )}
         </div>
 
-        {/* Admin view: Show MaxBid and Profit */}
+        {/* Admin view: Show StartBid, MaxBid and Profit */}
         {isAdmin && (
           <div className="flex items-center justify-between mt-2 text-sm">
-            <div>
-              <span className="text-xs text-gray-400">Max: </span>
-              <span className="font-medium text-blue-600">
-                {formatCurrency(costs.maxBid)}
-              </span>
+            <div className="flex items-center gap-3">
+              {/* Start Bid (AED) */}
+              {(vehicle.startBid || vehicle.finalBid) > 0 && (
+                <div>
+                  <span className="text-xs text-gray-400">Start: </span>
+                  <span className="font-medium text-gray-700">
+                    {formatCurrency(vehicle.finalBid || vehicle.startBid, 'AED')}
+                  </span>
+                </div>
+              )}
+              {/* Max Bid (EUR) */}
+              <div>
+                <span className="text-xs text-gray-400">Max: </span>
+                <span className="font-medium text-blue-600">
+                  {formatCurrency(costs.maxBid)}
+                </span>
+              </div>
             </div>
             <div className="flex items-center gap-2">
               <span className={costs.profit >= 0 ? 'text-green-600 font-medium' : 'text-red-600 font-medium'}>
