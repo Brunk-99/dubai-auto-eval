@@ -318,15 +318,26 @@ function VehicleCard({ vehicle, settings, isAdmin, currentUser, onClick }) {
     ? (vehicle.reviews || []).find(r => r.mechanicId === currentUser?.id)
     : null;
 
-  // Card styling based on review status (for mechanics)
-  const cardClassName = !isAdmin
-    ? myReview
-      ? 'flex gap-3 border-l-4 border-l-green-500 bg-green-50/30'
-      : 'flex gap-3 border-l-4 border-l-orange-500 bg-orange-50/30'
-    : 'flex gap-3';
+  // Check if vehicle has any reviews (for admin view)
+  const hasReviews = (vehicle.reviews || []).length > 0;
+
+  // Card styling based on review status
+  const getCardClassName = () => {
+    if (isAdmin) {
+      // Admin: green if has reviews, orange if no reviews yet
+      return hasReviews
+        ? 'flex gap-3 border-l-4 border-l-green-500 bg-green-50/30'
+        : 'flex gap-3 border-l-4 border-l-orange-500 bg-orange-50/30';
+    } else {
+      // Mechanic: green if reviewed by me, orange if not
+      return myReview
+        ? 'flex gap-3 border-l-4 border-l-green-500 bg-green-50/30'
+        : 'flex gap-3 border-l-4 border-l-orange-500 bg-orange-50/30';
+    }
+  };
 
   return (
-    <Card onClick={onClick} className={cardClassName}>
+    <Card onClick={onClick} className={getCardClassName()}>
       {/* Thumbnail */}
       <div className="w-20 h-20 flex-shrink-0 bg-gray-100 rounded-xl overflow-hidden relative">
         {thumbnail ? (
