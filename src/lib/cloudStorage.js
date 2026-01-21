@@ -204,6 +204,7 @@ export function createEmptyVehicle(costDefaults, currentUser = null) {
     id: generateUUID(),
     brand: '',
     model: '',
+    year: '',
     title: '',
     color: '',
     vin: '',

@@ -218,6 +218,7 @@ function InfoTab({ vehicle, isAdmin }) {
           </Badge>
         </InfoRow>
 
+        {vehicle.year && <InfoRow label="Baujahr">{vehicle.year}</InfoRow>}
         {vehicle.color && <InfoRow label="Farbe">{vehicle.color}</InfoRow>}
         {vehicle.mileage && <InfoRow label="Kilometerstand">{formatMileage(vehicle.mileage)} km</InfoRow>}
         {vehicle.vin && <InfoRow label="VIN">{vehicle.vin}</InfoRow>}

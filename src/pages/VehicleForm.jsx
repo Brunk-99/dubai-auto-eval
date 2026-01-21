@@ -21,6 +21,16 @@ const STATUS_OPTIONS = [
   { value: 'rejected', label: 'Abgelehnt' },
 ];
 
+// Baujahr-Optionen (letzte 20 Jahre)
+const currentYear = new Date().getFullYear();
+const YEAR_OPTIONS = [
+  { value: '', label: 'Baujahr wählen...' },
+  ...Array.from({ length: 21 }, (_, i) => {
+    const year = currentYear - i;
+    return { value: year.toString(), label: year.toString() };
+  }),
+];
+
 // Top 20 Automarken für den deutschen Gebrauchtwagenmarkt
 const CAR_BRANDS = [
   { value: '', label: 'Marke wählen...' },
@@ -668,6 +678,14 @@ export default function VehicleForm() {
                 />
               )
             )}
+
+            {/* Baujahr */}
+            <Select
+              label="Baujahr"
+              value={vehicle.year || ''}
+              onChange={(e) => handleChange('year', e.target.value)}
+              options={YEAR_OPTIONS}
+            />
 
             {/* Farb-Picker - visuelle Farbbalken */}
             <div>
