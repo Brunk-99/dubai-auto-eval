@@ -1,17 +1,18 @@
 // Vercel Serverless Function: POST /api/analyze
-// Synchroner Vertex AI Proxy (kein Job-Queue nötig bei Vercel)
+// High-End Vertex AI Proxy mit aggressivem Retry für Premium-Modelle
 
 import { GoogleAuth } from 'google-auth-library';
 
 // Vertex AI Configuration
 const VERTEX_PROJECT = process.env.VERTEX_PROJECT || 'dubai-car-check';
 const VERTEX_LOCATION = process.env.VERTEX_LOCATION || 'us-central1';
-// Gemini Modelle: 3.0 Preview -> 2.5 Pro -> 1.5 Pro (stabilste Fallback-Kette)
-const VERTEX_MODELS = [
-  'gemini-3-pro-preview',   // Neueste, tiefste Analyse
-  'gemini-2.5-pro',         // Stabil, gute Qualität
-  'gemini-1.5-pro-002'      // Bewährt, immer verfügbar
-];
+
+// NUR High-End Modelle - KEIN Fallback auf Flash/Lite
+const VERTEX_MODEL = 'gemini-3-pro-preview';
+
+// Retry Configuration
+const MAX_RETRIES = 5;
+const BASE_WAIT_MS = 5000; // 5 Sekunden Basis-Wartezeit
 
 // Wechselkurs EUR/AED
 const EUR_AED_RATE = 4.00;
@@ -50,9 +51,12 @@ Gib die Antwort STRENG als JSON aus mit folgendem Schema:
 
 Wichtig: Antworte NUR im JSON-Format ohne zusätzlichen Text.`;
 
-// Vertex AI URL Generator - v1beta1 für neue Modelle (3.0/2.5)
+// Vertex AI URL Generator - v1beta1 für neue Modelle
 const getVertexUrl = (model) =>
   `https://${VERTEX_LOCATION}-aiplatform.googleapis.com/v1beta1/projects/${VERTEX_PROJECT}/locations/${VERTEX_LOCATION}/publishers/google/models/${model}:generateContent`;
+
+// Sleep helper
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 export default async function handler(req, res) {
   // CORS Headers
@@ -78,18 +82,17 @@ export default async function handler(req, res) {
 
     const partCount = contents[0]?.parts?.length || 0;
     console.log(`[Analyze] Processing request with ${partCount} parts...`);
+    console.log(`[Analyze] Using HIGH-END model: ${VERTEX_MODEL}`);
 
     // Google Auth mit Service Account Credentials aus Environment
     let auth;
     if (process.env.GOOGLE_SERVICE_ACCOUNT_KEY) {
-      // Vercel: Credentials als JSON String in ENV
       const credentials = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_KEY);
       auth = new GoogleAuth({
         credentials,
         scopes: ['https://www.googleapis.com/auth/cloud-platform'],
       });
     } else {
-      // Lokal: GOOGLE_APPLICATION_CREDENTIALS Datei
       auth = new GoogleAuth({
         scopes: ['https://www.googleapis.com/auth/cloud-platform'],
       });
@@ -98,7 +101,7 @@ export default async function handler(req, res) {
     const client = await auth.getClient();
     const accessToken = await client.getAccessToken();
 
-    // Request Body mit System Instruction
+    // Request Body mit System Instruction und striktem JSON-Schema
     const requestBody = {
       system_instruction: {
         parts: [{ text: getSystemInstruction(EUR_AED_RATE) }]
@@ -144,12 +147,11 @@ export default async function handler(req, res) {
       ],
     };
 
-    // Versuche alle Modelle der Reihe nach
-    let lastError = null;
+    const url = getVertexUrl(VERTEX_MODEL);
 
-    for (const model of VERTEX_MODELS) {
-      const url = getVertexUrl(model);
-      console.log(`[Analyze] Trying model: ${model}`);
+    // AGGRESSIVE RETRY LOOP - Wir bleiben hartnäckig bei High-End Modellen
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+      console.log(`[Analyze] Attempt ${attempt}/${MAX_RETRIES} with model: ${VERTEX_MODEL}`);
 
       const response = await fetch(url, {
         method: 'POST',
@@ -160,14 +162,16 @@ export default async function handler(req, res) {
         body: JSON.stringify(requestBody),
       });
 
+      // SUCCESS - Verarbeite Antwort
       if (response.ok) {
         const data = await response.json();
-        console.log(`[Analyze] SUCCESS with model: ${model}`);
+        console.log(`[Analyze] SUCCESS with model: ${VERTEX_MODEL} on attempt ${attempt}`);
 
-        // Extrem sicheres JSON-Parsing: Extrahiere NUR das JSON-Objekt
+        // Extrem sicheres JSON-Parsing
         if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
           const rawText = data.candidates[0].content.parts[0].text;
           console.log('[Analyze] RAW KI ANSWER:', rawText.substring(0, 500) + (rawText.length > 500 ? '...' : ''));
+
           const startBracket = rawText.indexOf('{');
           const endBracket = rawText.lastIndexOf('}');
 
@@ -179,36 +183,80 @@ export default async function handler(req, res) {
               console.log('[Analyze] JSON erfolgreich extrahiert und bereinigt');
             } catch (e) {
               console.warn('[Analyze] JSON-Parsing fehlgeschlagen, sende Rohtext:', e.message);
-              // Rohtext beibehalten, Frontend kann damit umgehen
             }
-          } else {
-            console.warn('[Analyze] Kein gültiges JSON-Format gefunden in Antwort');
           }
         }
 
-        return res.status(200).json(data);
+        // Erfolg - Modell-Info mitgeben
+        return res.status(200).json({
+          ...data,
+          _meta: {
+            model: VERTEX_MODEL,
+            attempt: attempt,
+            status: 'success'
+          }
+        });
       }
 
-      // Error speichern und nächstes Modell versuchen
-      lastError = await response.json().catch(() => ({ error: { message: `HTTP ${response.status}` } }));
-      console.warn(`[Analyze] Model ${model} failed:`, lastError.error?.message || response.status);
+      // ERROR - Analysiere Fehlertyp
+      const errorData = await response.json().catch(() => ({ error: { message: `HTTP ${response.status}` } }));
+      const errorMsg = errorData.error?.message || '';
+      const statusCode = response.status;
 
-      const errorMsg = lastError.error?.message || '';
-      if (!errorMsg.includes('not found') && !errorMsg.includes('does not have access')) {
-        break;
+      console.warn(`[Analyze] Attempt ${attempt} failed:`, statusCode, errorMsg);
+
+      // 429 Resource Exhausted - RETRY mit Backoff
+      if (statusCode === 429 || errorMsg.includes('429') || errorMsg.includes('RESOURCE_EXHAUSTED') || errorMsg.includes('quota')) {
+        if (attempt < MAX_RETRIES) {
+          const waitTime = BASE_WAIT_MS * attempt; // 5s, 10s, 15s, 20s, 25s
+          console.log(`[Analyze] 429 Quota exhausted. Waiting ${waitTime/1000}s before retry...`);
+
+          // Sende "retrying" Status ans Frontend (für Polling)
+          // Bei synchronem Request können wir das nicht direkt, aber wir loggen es
+          console.log(`[Analyze] STATUS: retrying - High-End Modell ausgelastet. Warte auf freien Slot (Versuch ${attempt}/${MAX_RETRIES})...`);
+
+          await sleep(waitTime);
+          continue; // Nächster Versuch
+        }
       }
+
+      // Model not found - Kein Retry, sofort Fehler
+      if (errorMsg.includes('not found') || errorMsg.includes('does not have access')) {
+        console.error(`[Analyze] Model ${VERTEX_MODEL} not available:`, errorMsg);
+        return res.status(503).json({
+          error: `High-End Modell ${VERTEX_MODEL} nicht verfügbar. Bitte später erneut versuchen.`,
+          status: 'model_unavailable',
+          _meta: { model: VERTEX_MODEL, attempt }
+        });
+      }
+
+      // Andere Fehler - Auch retry versuchen
+      if (attempt < MAX_RETRIES) {
+        const waitTime = BASE_WAIT_MS * attempt;
+        console.log(`[Analyze] Error ${statusCode}. Waiting ${waitTime/1000}s before retry...`);
+        await sleep(waitTime);
+        continue;
+      }
+
+      // Alle Retries aufgebraucht
+      return res.status(statusCode || 500).json({
+        error: errorMsg || 'Vertex AI Fehler nach mehreren Versuchen',
+        status: 'failed_after_retries',
+        _meta: { model: VERTEX_MODEL, attempts: attempt }
+      });
     }
 
-    // Alle Modelle fehlgeschlagen
-    console.error('[Analyze] All models failed:', lastError);
+    // Sollte nie erreicht werden
     return res.status(500).json({
-      error: lastError?.error?.message || 'Vertex AI error',
+      error: 'Unerwarteter Fehler im Retry-Loop',
+      status: 'unexpected_error'
     });
 
   } catch (error) {
     console.error('[Analyze] Server error:', error.message);
     return res.status(500).json({
       error: 'Analyse fehlgeschlagen: ' + error.message,
+      status: 'server_error'
     });
   }
 }
@@ -220,5 +268,5 @@ export const config = {
       sizeLimit: '50mb',
     },
   },
-  maxDuration: 60, // 60 Sekunden Timeout für AI-Analyse
+  maxDuration: 60, // 60 Sekunden Timeout für AI-Analyse inkl. Retries
 };

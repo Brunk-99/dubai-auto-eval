@@ -7,7 +7,8 @@ export default function handler(req, res) {
   res.status(200).json({
     status: 'ok',
     project: process.env.VERTEX_PROJECT || 'dubai-car-check',
-    models: ['gemini-3-pro-preview', 'gemini-2.5-pro', 'gemini-1.5-pro-002'],
+    model: 'gemini-3-pro-preview',
+    strategy: 'aggressive-retry (5 attempts, exponential backoff)',
     endpoint: 'v1beta1',
     environment: 'vercel',
     timestamp: new Date().toISOString(),
