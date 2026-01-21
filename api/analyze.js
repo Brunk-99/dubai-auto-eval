@@ -6,9 +6,12 @@ import { GoogleAuth } from 'google-auth-library';
 // Vertex AI Configuration
 const VERTEX_PROJECT = process.env.VERTEX_PROJECT || 'dubai-car-check';
 const VERTEX_LOCATION = process.env.VERTEX_LOCATION || 'us-central1';
-// Gemini 3.0 Pro Preview als Primary, Gemini 2.5 Pro als stabiler Fallback
-const VERTEX_MODEL_PRIMARY = 'gemini-3-pro-preview';
-const VERTEX_MODEL_FALLBACK = 'gemini-2.5-pro';
+// Gemini Modelle: 3.0 Preview -> 2.5 Pro -> 1.5 Pro (stabilste Fallback-Kette)
+const VERTEX_MODELS = [
+  'gemini-3-pro-preview',   // Neueste, tiefste Analyse
+  'gemini-2.5-pro',         // Stabil, gute Qualität
+  'gemini-1.5-pro-002'      // Bewährt, immer verfügbar
+];
 
 // Wechselkurs EUR/AED
 const EUR_AED_RATE = 4.00;
@@ -106,6 +109,32 @@ export default async function handler(req, res) {
         topP: 0.95,
         maxOutputTokens: 8192,
         responseMimeType: 'application/json',
+        responseSchema: {
+          type: 'OBJECT',
+          properties: {
+            bauteil: { type: 'STRING' },
+            schaden_analyse: { type: 'STRING' },
+            schweregrad: { type: 'NUMBER' },
+            reparatur_weg: { type: 'STRING' },
+            kosten_schaetzung_aed: {
+              type: 'OBJECT',
+              properties: {
+                teile: { type: 'NUMBER' },
+                arbeit: { type: 'NUMBER' },
+                gesamt: { type: 'NUMBER' }
+              }
+            },
+            kosten_schaetzung_eur: {
+              type: 'OBJECT',
+              properties: {
+                gesamt_euro: { type: 'NUMBER' },
+                umrechnungskurs: { type: 'NUMBER' }
+              }
+            },
+            location_tipp: { type: 'STRING' },
+            fahrbereit: { type: 'BOOLEAN' }
+          }
+        }
       },
       safetySettings: safetySettings || [
         { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
@@ -115,11 +144,10 @@ export default async function handler(req, res) {
       ],
     };
 
-    // Versuche Primary Model, dann Fallback
-    const modelsToTry = [VERTEX_MODEL_PRIMARY, VERTEX_MODEL_FALLBACK];
+    // Versuche alle Modelle der Reihe nach
     let lastError = null;
 
-    for (const model of modelsToTry) {
+    for (const model of VERTEX_MODELS) {
       const url = getVertexUrl(model);
       console.log(`[Analyze] Trying model: ${model}`);
 
@@ -139,6 +167,7 @@ export default async function handler(req, res) {
         // Extrem sicheres JSON-Parsing: Extrahiere NUR das JSON-Objekt
         if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
           const rawText = data.candidates[0].content.parts[0].text;
+          console.log('[Analyze] RAW KI ANSWER:', rawText.substring(0, 500) + (rawText.length > 500 ? '...' : ''));
           const startBracket = rawText.indexOf('{');
           const endBracket = rawText.lastIndexOf('}');
 
