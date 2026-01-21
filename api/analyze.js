@@ -6,10 +6,9 @@ import { GoogleAuth } from 'google-auth-library';
 // Vertex AI Configuration
 const VERTEX_PROJECT = process.env.VERTEX_PROJECT || 'dubai-car-check';
 const VERTEX_LOCATION = process.env.VERTEX_LOCATION || 'us-central1';
-// Gemini 3.0 Pro als Primary, Gemini 2.5 Pro als Fallback
-// Wichtig: -001 Suffix für stabile Modell-IDs
-const VERTEX_MODEL_PRIMARY = 'gemini-3.0-pro-001';
-const VERTEX_MODEL_FALLBACK = 'gemini-2.5-pro-001';
+// Gemini 3.0 Pro Preview als Primary, Gemini 2.5 Pro als stabiler Fallback
+const VERTEX_MODEL_PRIMARY = 'gemini-3-pro-preview';
+const VERTEX_MODEL_FALLBACK = 'gemini-2.5-pro';
 
 // Wechselkurs EUR/AED
 const EUR_AED_RATE = 4.00;

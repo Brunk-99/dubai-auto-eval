@@ -7,7 +7,7 @@ export default function handler(req, res) {
   res.status(200).json({
     status: 'ok',
     project: process.env.VERTEX_PROJECT || 'dubai-car-check',
-    model: 'gemini-3.0-pro-001 (fallback: gemini-2.5-pro-001)',
+    model: 'gemini-3-pro-preview (fallback: gemini-2.5-pro)',
     endpoint: 'v1beta1',
     environment: 'vercel',
     timestamp: new Date().toISOString(),
