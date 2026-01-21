@@ -20,7 +20,7 @@ export default function Settings() {
     miscCost: 500,
     repairBufferPct: 15,
     defaultMarketPriceDE: 0,
-    targetProfit: 2000,
+    targetProfitPct: 35,
     safetyDeduction: 200,
   });
 
@@ -116,12 +116,12 @@ export default function Settings() {
 
             <Input
               label="Zielprofit"
-              placeholder="2000"
+              placeholder="35"
               type="text"
               inputMode="decimal"
-              value={defaults.targetProfit || ''}
-              onChange={(e) => handleChange('targetProfit', e.target.value)}
-              suffix="€"
+              value={defaults.targetProfitPct || ''}
+              onChange={(e) => handleChange('targetProfitPct', e.target.value)}
+              suffix="%"
             />
 
             <Input

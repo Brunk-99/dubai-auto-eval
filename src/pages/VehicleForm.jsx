@@ -812,23 +812,23 @@ export default function VehicleForm() {
           <h2 className="font-semibold text-gray-900 mb-4">Preise</h2>
           <div className="space-y-3">
             <Input
-              label="Startgebot *"
+              label="Startgebot (AED) *"
               placeholder="0"
               type="text"
               inputMode="decimal"
               value={vehicle.startBid || ''}
               onChange={(e) => handleNumberChange('startBid', e.target.value)}
-              suffix="€"
+              suffix="AED"
             />
 
             <Input
-              label="Endpreis / Kaufpreis"
+              label="Endpreis / Kaufpreis (AED)"
               placeholder="Wird automatisch = Startgebot"
               type="text"
               inputMode="decimal"
               value={vehicle.finalBid || ''}
               onChange={(e) => handleNumberChange('finalBid', e.target.value)}
-              suffix="€"
+              suffix="AED"
             />
 
             <Input

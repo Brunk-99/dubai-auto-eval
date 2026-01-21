@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getAllVehicles, getCostDefaults } from '../lib/storage';
 import { getAmpelStatus, calculateCosts, getReviewConsensus } from '../lib/calculations';
-import { formatCurrency, STATUS_LABELS, STATUS_COLORS } from '../lib/formatters';
+import { formatCurrency, formatMileage, STATUS_LABELS, STATUS_COLORS } from '../lib/formatters';
 import { isAdmin, getCurrentUser, clearCurrentUser } from '../lib/auth';
 import Header from '../components/Header';
 import Card from '../components/Card';
@@ -410,7 +410,7 @@ function VehicleCard({ vehicle, settings, isAdmin, currentUser, onClick }) {
               </span>
             )}
             {vehicle.mileage && (
-              <span className="text-gray-400 text-xs">{vehicle.mileage} km</span>
+              <span className="text-gray-400 text-xs">{formatMileage(vehicle.mileage)} km</span>
             )}
           </div>
         )}

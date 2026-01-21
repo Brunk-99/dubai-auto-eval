@@ -8,6 +8,7 @@ import {
   formatCurrency,
   formatPercent,
   formatDateTime,
+  formatMileage,
   STATUS_LABELS,
   STATUS_COLORS,
   SEVERITY_LABELS,
@@ -218,15 +219,15 @@ function InfoTab({ vehicle, isAdmin }) {
         </InfoRow>
 
         {vehicle.color && <InfoRow label="Farbe">{vehicle.color}</InfoRow>}
-        {vehicle.mileage && <InfoRow label="Kilometerstand">{vehicle.mileage} km</InfoRow>}
+        {vehicle.mileage && <InfoRow label="Kilometerstand">{formatMileage(vehicle.mileage)} km</InfoRow>}
         {vehicle.vin && <InfoRow label="VIN">{vehicle.vin}</InfoRow>}
         {vehicle.auctionLocation && <InfoRow label="Auktionsort">{vehicle.auctionLocation}</InfoRow>}
 
         {/* Only show financial info to admin */}
         {isAdmin && (
           <>
-            <InfoRow label="Startgebot">{formatCurrency(vehicle.startBid)}</InfoRow>
-            <InfoRow label="Endpreis">{formatCurrency(vehicle.finalBid)}</InfoRow>
+            <InfoRow label="Startgebot (AED)">{formatCurrency(vehicle.startBid, 'AED')}</InfoRow>
+            <InfoRow label="Endpreis (AED)">{formatCurrency(vehicle.finalBid, 'AED')}</InfoRow>
             <InfoRow label="Vergleichspreis DE">{formatCurrency(vehicle.marketPriceDE)}</InfoRow>
           </>
         )}
@@ -1035,9 +1036,10 @@ function CostsTab({ vehicle, costs, settings }) {
       <Card className="bg-blue-50 border-blue-200">
         <div className="text-center">
           <p className="text-sm text-blue-600 mb-1">Empfohlenes Maximalgebot</p>
-          <p className="text-3xl font-bold text-blue-700">{formatCurrency(costs.maxBid)}</p>
+          <p className="text-3xl font-bold text-blue-700">{formatCurrency(costs.maxBidAED, 'AED')}</p>
+          <p className="text-lg text-blue-600">({formatCurrency(costs.maxBid)})</p>
           <p className="text-xs text-blue-500 mt-2">
-            Bei Zielprofit von {formatCurrency(settings.targetProfit)} + {formatCurrency(settings.safetyDeduction)} Sicherheit
+            Bei Zielprofit von {costs.targetProfitPct}% + {formatCurrency(settings.safetyDeduction)} Sicherheit
           </p>
         </div>
       </Card>
@@ -1045,7 +1047,7 @@ function CostsTab({ vehicle, costs, settings }) {
       <Card>
         <h3 className="font-semibold text-gray-900 mb-4">Kostenaufstellung (aktuelles Gebot)</h3>
         <div className="space-y-3">
-          <CostRow label="Kaufpreis" value={costs.bidPrice} />
+          <CostRow label={`Kaufpreis (${formatCurrency(costs.bidPriceAED, 'AED')})`} value={costs.bidPrice} />
           <CostRow label="Zoll (10%)" value={costs.duty10} />
           <CostRow label="MwSt (19%)" value={costs.vat19} />
           <CostRow label="Transport" value={costs.transportCost} />

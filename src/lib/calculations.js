@@ -1,8 +1,24 @@
 // Cost calculation logic for German import
 
+// Exchange rate AED to EUR (1 EUR = 4.00 AED)
+export const EUR_AED_RATE = 4.00;
+
+// Default target profit percentage (35%)
+const DEFAULT_TARGET_PROFIT_PCT = 35;
+
 // Round down to nearest 50
 function roundDownToNearest50(value) {
   return Math.floor(value / 50) * 50;
+}
+
+// Convert AED to EUR
+export function aedToEur(aedAmount) {
+  return aedAmount / EUR_AED_RATE;
+}
+
+// Convert EUR to AED
+export function eurToAed(eurAmount) {
+  return eurAmount * EUR_AED_RATE;
 }
 
 // Get repair estimate base (mechanic avg or AI estimate)
@@ -35,6 +51,7 @@ function getRepairEstimateBase(vehicle) {
 }
 
 // Main cost calculation
+// NOTE: startBid and finalBid are in AED and will be converted to EUR
 export function calculateCosts(vehicle, settings = {}) {
   const {
     finalBid = 0,
@@ -52,15 +69,21 @@ export function calculateCosts(vehicle, settings = {}) {
   } = costInputs;
 
   const {
-    targetProfit = 2000,
+    targetProfitPct = DEFAULT_TARGET_PROFIT_PCT,
     safetyDeduction = 200,
   } = settings;
 
-  // Use finalBid, fallback to startBid
-  const bidPrice = finalBid || startBid || 0;
+  // Use finalBid, fallback to startBid (both are in AED)
+  const bidPriceAED = finalBid || startBid || 0;
+
+  // Convert AED to EUR for calculations
+  const bidPrice = aedToEur(bidPriceAED);
 
   // Use marketPriceDE, fallback to legacy expectedResaleDE
   const marketPrice = marketPriceDE || expectedResaleDE || 0;
+
+  // Calculate target profit as percentage of market price (35%)
+  const targetProfit = marketPrice * (targetProfitPct / 100);
 
   // Import duty (10%)
   const duty10 = bidPrice * 0.10;
@@ -89,14 +112,21 @@ export function calculateCosts(vehicle, settings = {}) {
   // ROI percentage
   const roiPct = totalCost > 0 ? (profit / totalCost) * 100 : 0;
 
-  // Calculate max bid
+  // Profit percentage of market price
+  const profitPct = marketPrice > 0 ? (profit / marketPrice) * 100 : 0;
+
+  // Calculate max bid (in EUR)
   // Formula: maxBidRaw = (marketPrice - targetProfit - safetyDeduction - otherCosts) / 1.309
   // 1.309 = 1 + 0.10 (duty) + 0.19 * 1.10 (VAT on price+duty)
   const maxBidRaw = (marketPrice - targetProfit - safetyDeduction - otherCosts) / 1.309;
   const maxBid = Math.max(0, roundDownToNearest50(maxBidRaw));
 
+  // Max bid in AED
+  const maxBidAED = eurToAed(maxBid);
+
   return {
     bidPrice,
+    bidPriceAED,
     marketPrice,
     duty10,
     vatBase,
@@ -112,9 +142,13 @@ export function calculateCosts(vehicle, settings = {}) {
     totalCost,
     profit,
     roiPct,
+    profitPct,
     maxBid,
+    maxBidAED,
     targetProfit,
+    targetProfitPct,
     safetyDeduction,
+    eurAedRate: EUR_AED_RATE,
   };
 }
 
@@ -166,8 +200,7 @@ export function getHighestRisk(reviews) {
 // Decision traffic light (Ampel) based on new rules
 export function getAmpelStatus(vehicle, settings = {}) {
   const costs = calculateCosts(vehicle, settings);
-  const { profit } = costs;
-  const { targetProfit = 2000 } = settings;
+  const { profit, profitPct, targetProfitPct } = costs;
 
   const consensus = getReviewConsensus(vehicle.reviews);
   const severity = vehicle.aiDamageReport?.severity;
@@ -186,22 +219,22 @@ export function getAmpelStatus(vehicle, settings = {}) {
     return { color: 'red', label: 'Nicht empfohlen', reason: 'Mehrere Mechaniker raten ab' };
   }
 
-  // YELLOW/ORANGE conditions
-  if (profit >= -500 && profit <= targetProfit) {
+  // YELLOW/ORANGE conditions - use percentage comparison
+  if (profit >= -500 && profitPct <= targetProfitPct) {
     return { color: 'yellow', label: 'Vorsicht', reason: 'Grenzwertiger Profit' };
   }
-  if (severity === 'high' && profit > targetProfit) {
+  if (severity === 'high' && profitPct > targetProfitPct) {
     return { color: 'yellow', label: 'Prüfen', reason: 'Hoher Schaden aber guter Profit' };
   }
   if (consensus.dominant === 'orange') {
     return { color: 'yellow', label: 'Unsicher', reason: 'Mechaniker sind unsicher' };
   }
 
-  // GREEN conditions
-  if (profit > targetProfit && severity !== 'high') {
+  // GREEN conditions - use percentage comparison
+  if (profitPct > targetProfitPct && severity !== 'high') {
     return { color: 'green', label: 'Empfohlen', reason: 'Guter Profit, akzeptabler Schaden' };
   }
-  if (profit > targetProfit && consensus.dominant === 'green') {
+  if (profitPct > targetProfitPct && consensus.dominant === 'green') {
     return { color: 'green', label: 'Empfohlen', reason: 'Guter Profit, Mechaniker empfehlen' };
   }
 

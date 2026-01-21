@@ -19,6 +19,19 @@ export function formatNumber(value) {
   return new Intl.NumberFormat('de-DE').format(value);
 }
 
+// Format mileage with thousand separator (200.000 km)
+export function formatMileage(value) {
+  if (value === null || value === undefined || value === '') {
+    return '–';
+  }
+  // Parse number from string if needed
+  const num = typeof value === 'string' ? parseInt(value.replace(/\D/g, ''), 10) : value;
+  if (isNaN(num)) {
+    return value; // Return original if can't parse
+  }
+  return new Intl.NumberFormat('de-DE').format(num);
+}
+
 export function formatPercent(value, decimals = 1) {
   if (value === null || value === undefined || isNaN(value)) {
     return '–';

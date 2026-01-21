@@ -256,7 +256,7 @@ const DEFAULT_COST_SETTINGS = {
   miscCost: 500,
   repairBufferPct: 15,
   defaultMarketPriceDE: 0,
-  targetProfit: 2000,
+  targetProfitPct: 35,
   safetyDeduction: 200,
 };
 
