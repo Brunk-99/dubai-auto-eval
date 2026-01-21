@@ -14,6 +14,7 @@ const BASE_WAIT_MS = 2000; // 2 Sekunden Basis-Wartezeit
 const EUR_AED_RATE = 4.00;
 
 // System-Instruction für KFZ-Gutachter Dubai/VAE
+// ENHANCED: Zusätzliche Felder für technisches vs. wirtschaftliches Severity-Scoring
 const getSystemInstruction = (exchangeRate) => `Du bist ein KFZ-Gutachter für den Zweitmarkt in den VAE. Analysiere den Schaden basierend auf Werkstattpreisen in Al Quoz (Dubai) und Sharjah Industrial Area.
 
 Nutze für Ersatzteile Preise für gebrauchte Originalteile (Scrap Parts) von Anbietern aus Sharjah (Sajja).
@@ -26,10 +27,18 @@ Arbeitskosten: Nutze Stundensätze kleinerer, unabhängiger Garagen (ca. 100-200
 
 Reparatur-Stil: Priorisiere 'Denting & Painting' (Ausbeulen und Lackieren) gegenüber Neukauf von Blechteilen.
 
+WICHTIG: Bei der Schweregrad-Bewertung (1-10) fokussiere dich NUR auf den TECHNISCHEN Schweregrad:
+- 1-3: Kosmetische Schäden (Kratzer, kleine Dellen)
+- 4-6: Mittlere Schäden (Blechteile, Stoßstangen, Scheinwerfer)
+- 7-8: Schwere Schäden (Sicherheitsrelevante Teile, tiefe Strukturschäden)
+- 9-10: Totalschaden oder rahmenbedrohende Schäden
+
+Die wirtschaftliche Bewertung erfolgt separat über die Kostenangaben.
+
 Gib die Antwort STRENG als JSON aus mit folgendem Schema:
 {
-  "bauteil": "string",
-  "schaden_analyse": "string",
+  "bauteil": "string (Hauptbauteil das beschädigt ist)",
+  "schaden_analyse": "string (Detaillierte Beschreibung)",
   "schweregrad": 1-10,
   "reparatur_weg": "Gebrauchtteile/Denting/Lackierung",
   "kosten_schaetzung_aed": {
@@ -42,7 +51,9 @@ Gib die Antwort STRENG als JSON aus mit folgendem Schema:
     "umrechnungskurs": ${exchangeRate.toFixed(2)}
   },
   "location_tipp": "z.B. Sharjah Industrial Area oder Al Quoz",
-  "fahrbereit": boolean
+  "fahrbereit": boolean,
+  "affected_parts": ["string (Liste aller beschädigten Teile)"],
+  "risk_flags": ["string (z.B. HEADLIGHT_MISSING, STRUCTURAL_SUSPECT, AIRBAG_RISK, FLUID_LEAK)"]
 }
 
 Wichtig: Antworte NUR im JSON-Format ohne zusätzlichen Text.`;

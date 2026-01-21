@@ -1,6 +1,13 @@
 // AI Damage Analysis using Vertex AI (via Vercel Serverless Functions)
 // Analyzes vehicle damage photos and returns structured assessment
 // Supports both: Vercel (synchronous) and Local Dev Server (async job queue)
+//
+// ENHANCED: Now includes severity_breakdown with technical and economic severity scores
+// - Technical severity: Based on safety-critical components, structural damage
+// - Economic severity: Based on repair costs in Dubai (Sharjah parts, Al Quoz labor)
+// See severityScoring.js for the deterministic scoring logic
+
+import { enrichReportWithSeverityBreakdown } from './severityScoring.js';
 
 // Configuration
 // Backend URL - in production use relative path, in dev use same host as browser but port 3001
@@ -519,7 +526,8 @@ export async function analyzeVehicleDamage(photos, vehicleInfo = {}, options = {
     const analysis = parseGeminiResponse(result.text);
     console.log('[AI] Parsed:', analysis);
 
-    const report = {
+    // Build base report
+    const baseReport = {
       createdAt: new Date().toISOString(),
       // Dubai/VAE specific
       bauteil: analysis.bauteil,
@@ -530,7 +538,7 @@ export async function analyzeVehicleDamage(photos, vehicleInfo = {}, options = {
       kostenEur: analysis.kostenEur,
       locationTipp: analysis.locationTipp,
       fahrbereit: analysis.fahrbereit,
-      // Legacy compatibility
+      // Legacy compatibility (kept for backward compatibility)
       severity: analysis.severity,
       severityScore: analysis.severityScore,
       summary: analysis.schadenAnalyse,
@@ -553,7 +561,7 @@ export async function analyzeVehicleDamage(photos, vehicleInfo = {}, options = {
         mileage: vehicleInfo.mileage || null,
       },
       rawJson: {
-        model: 'gemini-2.5-pro (Vertex AI)',
+        model: 'gpt-4.1 (OpenAI)',
         timestamp: Date.now(),
         confidence: analysis.confidence,
         duration: result.duration,
@@ -561,6 +569,12 @@ export async function analyzeVehicleDamage(photos, vehicleInfo = {}, options = {
         rawAnalysis: analysis,
       },
     };
+
+    // ENHANCED: Add severity breakdown (technical vs economic)
+    // This calculates technical and economic severity scores deterministically
+    // from the AI findings, NOT hallucinated by the AI itself
+    const report = enrichReportWithSeverityBreakdown(baseReport);
+    console.log('[AI] Severity breakdown:', report.severityBreakdown);
 
     // Show browser notification
     if (enableNotifications) {

@@ -583,9 +583,9 @@ function DamageTab({ vehicle, onUpdate, costs, isAdmin }) {
           {/* Main Stats Card */}
           <Card>
             <div className="space-y-4">
-              {/* Severity Score */}
+              {/* Legacy Severity Score (kept for backward compatibility) */}
               <div className="flex items-center justify-between">
-                <span className="text-gray-500">Schweregrad</span>
+                <span className="text-gray-500">Schweregrad (gesamt)</span>
                 <div className="flex items-center gap-2">
                   {report.severityScore !== undefined && (
                     <span className="text-sm text-gray-400">{report.severityScore}%</span>
@@ -596,9 +596,57 @@ function DamageTab({ vehicle, onUpdate, costs, isAdmin }) {
                 </div>
               </div>
 
+              {/* NEW: Technical Severity */}
+              {report.severityBreakdown?.technical && (
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-500">Technischer Schweregrad</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-400">{report.severityBreakdown.technical.percent}%</span>
+                    <span className={`font-bold ${
+                      report.severityBreakdown.technical.label === 'SCHWER' ? 'text-red-600' :
+                      report.severityBreakdown.technical.label === 'MITTEL' ? 'text-orange-600' :
+                      'text-green-600'
+                    }`}>
+                      {report.severityBreakdown.technical.label === 'SCHWER' ? 'Schwer' :
+                       report.severityBreakdown.technical.label === 'MITTEL' ? 'Mittel' : 'Leicht'}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* NEW: Economic Severity (Dubai) */}
+              {report.severityBreakdown?.economic && (
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1">
+                    <span className="text-gray-500">Wirtschaftlicher Schweregrad</span>
+                    <span className="text-xs text-gray-400">(Dubai)</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-400">{report.severityBreakdown.economic.percent}%</span>
+                    <span className={`font-bold ${
+                      report.severityBreakdown.economic.label === 'SCHWER' ? 'text-red-600' :
+                      report.severityBreakdown.economic.label === 'MITTEL' ? 'text-orange-600' :
+                      'text-green-600'
+                    }`}>
+                      {report.severityBreakdown.economic.label === 'SCHWER' ? 'Hoch' :
+                       report.severityBreakdown.economic.label === 'MITTEL' ? 'Moderat' : 'Günstig'}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* NEW: Summary Badge */}
+              {report.severityBreakdown?.summaryBadge && (
+                <div className="pt-2 border-t border-gray-100">
+                  <p className="text-sm text-blue-700 bg-blue-50 rounded-lg px-3 py-2 text-center">
+                    {report.severityBreakdown.summaryBadge}
+                  </p>
+                </div>
+              )}
+
               {/* Frame Risk */}
               {report.frameRisk && (
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between pt-2 border-t border-gray-100">
                   <span className="text-gray-500">Rahmenrisiko</span>
                   <span className={`font-bold ${
                     report.frameRisk === 'hoch' ? 'text-red-600' :
@@ -639,6 +687,36 @@ function DamageTab({ vehicle, onUpdate, costs, isAdmin }) {
               )}
             </div>
           </Card>
+
+          {/* NEW: Technical Severity Reasons (expandable) */}
+          {report.severityBreakdown?.technical?.reasons?.length > 0 && (
+            <Card className="bg-gray-50">
+              <p className="text-xs text-gray-500 mb-2">Technische Bewertung basiert auf:</p>
+              <ul className="text-sm text-gray-700 space-y-1">
+                {report.severityBreakdown.technical.reasons.map((reason, i) => (
+                  <li key={i} className="flex items-start gap-2">
+                    <span className="text-gray-400">•</span>
+                    <span>{reason}</span>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          )}
+
+          {/* NEW: Economic Severity Reasons (expandable) */}
+          {report.severityBreakdown?.economic?.reasons?.length > 0 && (
+            <Card className="bg-green-50 border-green-100">
+              <p className="text-xs text-green-600 mb-2">Wirtschaftliche Bewertung (Dubai-Markt):</p>
+              <ul className="text-sm text-green-800 space-y-1">
+                {report.severityBreakdown.economic.reasons.map((reason, i) => (
+                  <li key={i} className="flex items-start gap-2">
+                    <span className="text-green-400">•</span>
+                    <span>{reason}</span>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          )}
 
           {/* Summary */}
           <Card>
