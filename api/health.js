@@ -6,10 +6,10 @@ export default function handler(req, res) {
 
   res.status(200).json({
     status: 'ok',
-    project: process.env.VERTEX_PROJECT || 'dubai-car-check',
-    models: ['gemini-2.5-pro-001', 'gemini-1.5-pro-002'],
-    strategy: 'pro-switch + aggressive-retry (5 attempts per model)',
-    endpoint: 'v1beta1',
+    provider: 'openai',
+    model: 'gpt-4.1',
+    strategy: 'aggressive-retry (5 attempts, exponential backoff)',
+    features: ['vision', 'json_mode'],
     environment: 'vercel',
     timestamp: new Date().toISOString(),
   });

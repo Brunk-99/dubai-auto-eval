@@ -1,22 +1,14 @@
 // Vercel Serverless Function: POST /api/analyze
-// High-End Vertex AI Proxy mit aggressivem Retry für Premium-Modelle
+// OpenAI GPT-4.1 Vision API für KFZ-Schadensanalyse
 
-import { GoogleAuth } from 'google-auth-library';
+import OpenAI from 'openai';
 
-// Vertex AI Configuration
-const VERTEX_PROJECT = process.env.VERTEX_PROJECT || 'dubai-car-check';
-const VERTEX_LOCATION = process.env.VERTEX_LOCATION || 'us-central1';
-
-// High-End Pro-Modelle - KEIN Fallback auf Flash/Lite!
-// Priority: 2.5 Pro (neueste) -> 1.5 Pro (bewährt, immer verfügbar)
-const VERTEX_MODELS = [
-  'gemini-2.5-pro-001',   // Neueste Pro-Version (Beta)
-  'gemini-1.5-pro-002'    // Bewährte Pro-Version (stabil)
-];
+// OpenAI Configuration
+const OPENAI_MODEL = 'gpt-4.1';
 
 // Retry Configuration
 const MAX_RETRIES = 5;
-const BASE_WAIT_MS = 5000; // 5 Sekunden Basis-Wartezeit
+const BASE_WAIT_MS = 2000; // 2 Sekunden Basis-Wartezeit
 
 // Wechselkurs EUR/AED
 const EUR_AED_RATE = 4.00;
@@ -55,12 +47,41 @@ Gib die Antwort STRENG als JSON aus mit folgendem Schema:
 
 Wichtig: Antworte NUR im JSON-Format ohne zusätzlichen Text.`;
 
-// Vertex AI URL Generator - v1beta1 für neue Modelle
-const getVertexUrl = (model) =>
-  `https://${VERTEX_LOCATION}-aiplatform.googleapis.com/v1beta1/projects/${VERTEX_PROJECT}/locations/${VERTEX_LOCATION}/publishers/google/models/${model}:generateContent`;
-
 // Sleep helper
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+// JSON Repair Helper - extrahiert JSON aus Text mit möglichen Markdown-Blöcken
+function extractAndRepairJSON(text) {
+  if (!text) return null;
+
+  let jsonString = text.trim();
+
+  // Entferne Markdown Code-Blöcke
+  if (jsonString.startsWith('```json')) {
+    jsonString = jsonString.slice(7);
+  } else if (jsonString.startsWith('```')) {
+    jsonString = jsonString.slice(3);
+  }
+  if (jsonString.endsWith('```')) {
+    jsonString = jsonString.slice(0, -3);
+  }
+  jsonString = jsonString.trim();
+
+  // Finde JSON-Objekt
+  const startBracket = jsonString.indexOf('{');
+  const endBracket = jsonString.lastIndexOf('}');
+
+  if (startBracket !== -1 && endBracket !== -1 && endBracket > startBracket) {
+    jsonString = jsonString.substring(startBracket, endBracket + 1);
+  }
+
+  try {
+    return JSON.parse(jsonString);
+  } catch (e) {
+    console.warn('[Analyze] JSON-Parsing fehlgeschlagen:', e.message);
+    return null;
+  }
+}
 
 export default async function handler(req, res) {
   // CORS Headers
@@ -78,160 +99,146 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { contents, generationConfig, safetySettings } = req.body;
+    const { contents } = req.body;
 
     if (!contents) {
       return res.status(400).json({ error: 'Missing contents' });
     }
 
-    const partCount = contents[0]?.parts?.length || 0;
+    // Extrahiere Bilder und Text aus Gemini-Format (Kompatibilität)
+    const parts = contents[0]?.parts || [];
+    const partCount = parts.length;
     console.log(`[Analyze] Processing request with ${partCount} parts...`);
-    console.log(`[Analyze] Pro-Switch Strategy: ${VERTEX_MODELS.join(' -> ')}`);
+    console.log(`[Analyze] Using OpenAI Model: ${OPENAI_MODEL}`);
 
-    // Google Auth mit Service Account Credentials aus Environment
-    let auth;
-    if (process.env.GOOGLE_SERVICE_ACCOUNT_KEY) {
-      const credentials = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_KEY);
-      auth = new GoogleAuth({
-        credentials,
-        scopes: ['https://www.googleapis.com/auth/cloud-platform'],
-      });
-    } else {
-      auth = new GoogleAuth({
-        scopes: ['https://www.googleapis.com/auth/cloud-platform'],
-      });
+    // Konvertiere Gemini-Format zu OpenAI-Format
+    const openaiContent = [];
+
+    for (const part of parts) {
+      if (part.text) {
+        openaiContent.push({
+          type: 'text',
+          text: part.text
+        });
+      } else if (part.inline_data || part.inlineData) {
+        const inlineData = part.inline_data || part.inlineData;
+        const mimeType = inlineData.mime_type || inlineData.mimeType || 'image/jpeg';
+        const base64Data = inlineData.data;
+
+        openaiContent.push({
+          type: 'image_url',
+          image_url: {
+            url: `data:${mimeType};base64,${base64Data}`,
+            detail: 'high' // Beste Bildqualität für Schadensanalyse
+          }
+        });
+      }
     }
 
-    const client = await auth.getClient();
-    const accessToken = await client.getAccessToken();
+    if (openaiContent.length === 0) {
+      return res.status(400).json({ error: 'No valid content found' });
+    }
 
-    // Request Body mit System Instruction und striktem JSON-Schema
-    const requestBody = {
-      system_instruction: {
-        parts: [{ text: getSystemInstruction(EUR_AED_RATE) }]
-      },
-      contents,
-      generationConfig: generationConfig || {
-        temperature: 0.2,
-        topP: 0.95,
-        maxOutputTokens: 8192,
-        responseMimeType: 'application/json',
-        responseSchema: {
-          type: 'OBJECT',
-          properties: {
-            bauteil: { type: 'STRING' },
-            schaden_analyse: { type: 'STRING' },
-            schweregrad: { type: 'NUMBER' },
-            reparatur_weg: { type: 'STRING' },
-            kosten_schaetzung_aed: {
-              type: 'OBJECT',
-              properties: {
-                teile: { type: 'NUMBER' },
-                arbeit: { type: 'NUMBER' },
-                gesamt: { type: 'NUMBER' }
-              }
+    // OpenAI Client initialisieren
+    const openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY
+    });
+
+    // AGGRESSIVE RETRY LOOP
+    let lastError = null;
+
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+      console.log(`[Analyze] Attempt ${attempt}/${MAX_RETRIES} with model: ${OPENAI_MODEL}`);
+
+      try {
+        const response = await openai.chat.completions.create({
+          model: OPENAI_MODEL,
+          messages: [
+            {
+              role: 'system',
+              content: getSystemInstruction(EUR_AED_RATE)
             },
-            kosten_schaetzung_eur: {
-              type: 'OBJECT',
-              properties: {
-                gesamt_euro: { type: 'NUMBER' },
-                umrechnungskurs: { type: 'NUMBER' }
-              }
-            },
-            location_tipp: { type: 'STRING' },
-            fahrbereit: { type: 'BOOLEAN' }
-          }
-        }
-      },
-      safetySettings: safetySettings || [
-        { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
-        { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
-        { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
-        { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
-      ],
-    };
-
-    // PRO-SWITCH: Versuche Modelle der Reihe nach (2.5 Pro -> 1.5 Pro)
-    // Innerhalb jedes Modells: Aggressive Retry bei 429
-    for (const currentModel of VERTEX_MODELS) {
-      const url = getVertexUrl(currentModel);
-      console.log(`[Analyze] Trying HIGH-END model: ${currentModel}`);
-
-      // AGGRESSIVE RETRY LOOP für aktuelles Modell
-      for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-        console.log(`[Analyze] Attempt ${attempt}/${MAX_RETRIES} with model: ${currentModel}`);
-
-        const response = await fetch(url, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${accessToken.token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(requestBody),
+            {
+              role: 'user',
+              content: openaiContent
+            }
+          ],
+          max_tokens: 4096,
+          temperature: 0.2,
+          response_format: { type: 'json_object' }
         });
 
-        // SUCCESS - Verarbeite Antwort
-        if (response.ok) {
-          const data = await response.json();
-          console.log(`[Analyze] SUCCESS with model: ${currentModel} on attempt ${attempt}`);
+        // Erfolgreiche Antwort
+        const rawText = response.choices[0]?.message?.content || '';
+        console.log('[Analyze] RAW KI ANSWER:', rawText.substring(0, 500) + (rawText.length > 500 ? '...' : ''));
 
-          // Extrem sicheres JSON-Parsing
-          if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
-            const rawText = data.candidates[0].content.parts[0].text;
-            console.log('[Analyze] RAW KI ANSWER:', rawText.substring(0, 500) + (rawText.length > 500 ? '...' : ''));
+        // JSON extrahieren und validieren
+        const parsed = extractAndRepairJSON(rawText);
 
-            const startBracket = rawText.indexOf('{');
-            const endBracket = rawText.lastIndexOf('}');
+        if (parsed) {
+          console.log(`[Analyze] SUCCESS with model: ${OPENAI_MODEL} on attempt ${attempt}`);
 
-            if (startBracket !== -1 && endBracket !== -1 && endBracket > startBracket) {
-              const jsonString = rawText.substring(startBracket, endBracket + 1);
-              try {
-                const parsed = JSON.parse(jsonString);
-                data.candidates[0].content.parts[0].text = JSON.stringify(parsed);
-                console.log('[Analyze] JSON erfolgreich extrahiert und bereinigt');
-              } catch (e) {
-                console.warn('[Analyze] JSON-Parsing fehlgeschlagen, sende Rohtext:', e.message);
-              }
-            }
-          }
-
-          // Erfolg - Modell-Info mitgeben
+          // Antwort im Gemini-kompatiblen Format zurückgeben
           return res.status(200).json({
-            ...data,
+            candidates: [{
+              content: {
+                parts: [{
+                  text: JSON.stringify(parsed)
+                }]
+              }
+            }],
             _meta: {
-              model: currentModel,
+              model: OPENAI_MODEL,
               attempt: attempt,
-              status: 'success'
+              status: 'success',
+              provider: 'openai'
+            }
+          });
+        } else {
+          console.warn('[Analyze] JSON extraction failed, raw response saved');
+          // Auch bei fehlerhaftem JSON zurückgeben
+          return res.status(200).json({
+            candidates: [{
+              content: {
+                parts: [{
+                  text: rawText
+                }]
+              }
+            }],
+            _meta: {
+              model: OPENAI_MODEL,
+              attempt: attempt,
+              status: 'success_raw',
+              provider: 'openai'
             }
           });
         }
 
-        // ERROR - Analysiere Fehlertyp
-        const errorData = await response.json().catch(() => ({ error: { message: `HTTP ${response.status}` } }));
-        const errorMsg = errorData.error?.message || '';
-        const statusCode = response.status;
+      } catch (error) {
+        lastError = error;
+        const statusCode = error.status || error.statusCode || 500;
+        const errorMsg = error.message || '';
 
         console.warn(`[Analyze] Attempt ${attempt} failed:`, statusCode, errorMsg);
 
-        // Model not found (404) - Wechsle zum nächsten Pro-Modell
-        if (statusCode === 404 || errorMsg.includes('not found') || errorMsg.includes('does not have access')) {
-          console.log(`[Analyze] Model ${currentModel} not available. Trying next Pro model...`);
-          break; // Breche Retry-Loop ab, wechsle zum nächsten Modell
+        // Rate Limit (429) - Retry mit Backoff
+        if (statusCode === 429 || errorMsg.includes('rate_limit')) {
+          if (attempt < MAX_RETRIES) {
+            const waitTime = BASE_WAIT_MS * Math.pow(2, attempt - 1); // Exponential backoff
+            console.log(`[Analyze] Rate limit hit. Waiting ${waitTime/1000}s before retry...`);
+            await sleep(waitTime);
+            continue;
+          }
         }
 
-        // 429 Resource Exhausted - RETRY mit Backoff (beim GLEICHEN Modell bleiben!)
-        if (statusCode === 429 || errorMsg.includes('429') || errorMsg.includes('RESOURCE_EXHAUSTED') || errorMsg.includes('quota')) {
+        // Server Error (5xx) - Retry
+        if (statusCode >= 500 && statusCode < 600) {
           if (attempt < MAX_RETRIES) {
-            const waitTime = BASE_WAIT_MS * attempt; // 5s, 10s, 15s, 20s, 25s
-            console.log(`[Analyze] 429 Quota exhausted. Waiting ${waitTime/1000}s before retry...`);
-            console.log(`[Analyze] STATUS: retrying - High-End Modell ausgelastet. Warte auf freien Slot (Versuch ${attempt}/${MAX_RETRIES})...`);
-
+            const waitTime = BASE_WAIT_MS * attempt;
+            console.log(`[Analyze] Server error ${statusCode}. Waiting ${waitTime/1000}s before retry...`);
             await sleep(waitTime);
-            continue; // Nächster Versuch mit gleichem Modell
+            continue;
           }
-          // Nach 5 Versuchen: Wechsle zum nächsten Modell
-          console.log(`[Analyze] 429 after ${MAX_RETRIES} attempts. Trying next Pro model...`);
-          break;
         }
 
         // Andere Fehler - Retry versuchen
@@ -244,12 +251,13 @@ export default async function handler(req, res) {
       }
     }
 
-    // Alle Pro-Modelle fehlgeschlagen
-    console.error('[Analyze] All Pro models failed');
+    // Alle Versuche fehlgeschlagen
+    console.error('[Analyze] All attempts failed');
     return res.status(503).json({
-      error: 'Alle High-End Modelle (2.5 Pro, 1.5 Pro) sind derzeit nicht verfügbar. Bitte später erneut versuchen.',
-      status: 'all_models_failed',
-      _meta: { models_tried: VERTEX_MODELS }
+      error: `OpenAI API nicht erreichbar nach ${MAX_RETRIES} Versuchen. Bitte später erneut versuchen.`,
+      details: lastError?.message || 'Unknown error',
+      status: 'all_attempts_failed',
+      _meta: { model: OPENAI_MODEL, attempts: MAX_RETRIES }
     });
 
   } catch (error) {
