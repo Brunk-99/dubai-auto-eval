@@ -214,53 +214,130 @@ export default function VehicleDetails() {
 
 // ============ INFO TAB ============
 function InfoTab({ vehicle, isAdmin }) {
+  // SVG Icons (alle in blue-600)
+  const StatusIcon = () => (
+    <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  );
+  const CarIcon = () => (
+    <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" />
+    </svg>
+  );
+  const MoneyIcon = () => (
+    <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  );
+  const LocationIcon = () => (
+    <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+    </svg>
+  );
+  const ClockIcon = () => (
+    <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  );
+
   return (
-    <Card>
-      <div className="space-y-4">
-        <InfoRow label="Status">
-          <Badge className={STATUS_COLORS[vehicle.status]}>
-            {STATUS_LABELS[vehicle.status]}
-          </Badge>
-        </InfoRow>
-
-        {vehicle.year && <InfoRow label="Baujahr">{vehicle.year}</InfoRow>}
-        {vehicle.color && <InfoRow label="Farbe">{vehicle.color}</InfoRow>}
-        {vehicle.mileage && <InfoRow label="Kilometerstand">{formatMileage(vehicle.mileage)} km</InfoRow>}
-        {vehicle.vin && <InfoRow label="VIN">{vehicle.vin}</InfoRow>}
-        {vehicle.auctionLocation && <InfoRow label="Auktionsort">{vehicle.auctionLocation}</InfoRow>}
-
-        {/* Only show financial info to admin */}
-        {isAdmin && (
-          <>
-            <InfoRow label="Startgebot (AED)">{formatCurrency(vehicle.startBid, 'AED')}</InfoRow>
-            <InfoRow label="Endpreis (AED)">{formatCurrency(vehicle.finalBid, 'AED')}</InfoRow>
-            <InfoRow label="Vergleichspreis DE">{formatCurrency(vehicle.marketPriceDE)}</InfoRow>
-          </>
-        )}
-
-        {vehicle.notes && (
-          <div className="pt-2 border-t border-gray-100">
-            <p className="text-xs text-gray-500 mb-1">Notizen</p>
-            <p className="text-gray-700 whitespace-pre-wrap">{vehicle.notes}</p>
+    <div className="space-y-4">
+      {/* Status Section */}
+      <Card>
+        <div className="flex items-center gap-3 mb-3">
+          <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
+            <StatusIcon />
           </div>
-        )}
+          <h3 className="font-semibold text-gray-900">Status</h3>
+        </div>
+        <Badge className={`${STATUS_COLORS[vehicle.status]} text-sm px-3 py-1.5`}>
+          {STATUS_LABELS[vehicle.status]}
+        </Badge>
+      </Card>
 
-        <div className="pt-2 border-t border-gray-100 text-xs text-gray-400">
+      {/* Vehicle Data Section */}
+      <Card>
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
+            <CarIcon />
+          </div>
+          <h3 className="font-semibold text-gray-900">Fahrzeugdaten</h3>
+        </div>
+        <div className="space-y-3">
+          {vehicle.year && <InfoRow label="Baujahr">{vehicle.year}</InfoRow>}
+          {vehicle.color && <InfoRow label="Farbe">{vehicle.color}</InfoRow>}
+          {vehicle.mileage && <InfoRow label="Kilometerstand">{formatMileage(vehicle.mileage)} km</InfoRow>}
+          {vehicle.vin && <InfoRow label="VIN" mono>{vehicle.vin}</InfoRow>}
+        </div>
+      </Card>
+
+      {/* Auction Section */}
+      {vehicle.auctionLocation && (
+        <Card>
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
+              <LocationIcon />
+            </div>
+            <h3 className="font-semibold text-gray-900">Auktion</h3>
+          </div>
+          <InfoRow label="Auktionsort">{vehicle.auctionLocation}</InfoRow>
+        </Card>
+      )}
+
+      {/* Financial Info - Admin Only */}
+      {isAdmin && (
+        <Card>
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
+              <MoneyIcon />
+            </div>
+            <h3 className="font-semibold text-gray-900">Finanzdaten</h3>
+          </div>
+          <div className="space-y-3">
+            <InfoRow label="Startgebot">{formatCurrency(vehicle.startBid, 'AED')}</InfoRow>
+            <InfoRow label="Endpreis">{formatCurrency(vehicle.finalBid, 'AED')}</InfoRow>
+            <InfoRow label="Vergleichspreis DE" highlight>{formatCurrency(vehicle.marketPriceDE)}</InfoRow>
+          </div>
+        </Card>
+      )}
+
+      {/* Notes Section */}
+      {vehicle.notes && (
+        <Card>
+          <p className="text-xs text-gray-500 uppercase tracking-wide mb-2">Notizen</p>
+          <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">{vehicle.notes}</p>
+        </Card>
+      )}
+
+      {/* Meta Info */}
+      <Card className="bg-gray-50 border-gray-200">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center">
+            <ClockIcon />
+          </div>
+          <h3 className="font-semibold text-gray-900 text-sm">Verlauf</h3>
+        </div>
+        <div className="text-xs text-gray-500 space-y-1">
           {vehicle.createdBy && <p>Erstellt von: {vehicle.createdBy.name}</p>}
           <p>Erstellt: {formatDateTime(vehicle.createdAt)}</p>
           {vehicle.updatedBy && <p>Bearbeitet von: {vehicle.updatedBy.name}</p>}
           <p>Aktualisiert: {formatDateTime(vehicle.updatedAt)}</p>
         </div>
-      </div>
-    </Card>
+      </Card>
+    </div>
   );
 }
 
-function InfoRow({ label, children }) {
+function InfoRow({ label, children, mono, highlight }) {
   return (
-    <div className="flex justify-between items-center">
+    <div className="flex justify-between items-center py-2 border-b border-gray-50 last:border-0 last:pb-0 first:pt-0">
       <span className="text-gray-500">{label}</span>
-      <span className="text-gray-900 font-medium">{children}</span>
+      <span className={`font-medium ${mono ? 'font-mono text-sm' : ''} ${highlight ? 'text-blue-600' : 'text-gray-900'}`}>
+        {children}
+      </span>
     </div>
   );
 }
@@ -954,6 +1031,18 @@ function DamageTab({ vehicle, onUpdate, costs, isAdmin }) {
 function AdminReviewsTab({ vehicle, onUpdate }) {
   const consensus = getReviewConsensus(vehicle.reviews);
 
+  // SVG Icons
+  const UsersIcon = () => (
+    <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+    </svg>
+  );
+  const TrashIcon = () => (
+    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+    </svg>
+  );
+
   // Calculate average repair estimate
   const estimates = (vehicle.reviews || [])
     .map(r => r.repairEstimate)
@@ -971,36 +1060,74 @@ function AdminReviewsTab({ vehicle, onUpdate }) {
     <div className="space-y-4">
       {/* Consensus Summary */}
       {consensus.total > 0 && (
-        <Card>
-          <h3 className="font-semibold text-gray-900 mb-3">Mechaniker-Konsens</h3>
-          <div className="flex items-center gap-4 mb-3">
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded-full bg-green-500"></div>
-              <span className="text-sm">{consensus.green}</span>
+        <Card className="bg-gray-50 border-gray-200">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center">
+              <UsersIcon />
             </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded-full bg-orange-500"></div>
-              <span className="text-sm">{consensus.orange}</span>
+            <h3 className="font-semibold text-gray-900">Mechaniker-Konsens</h3>
+            <span className="ml-auto text-xs text-gray-500 bg-white px-2 py-1 rounded-full">
+              {consensus.total} {consensus.total === 1 ? 'Bewertung' : 'Bewertungen'}
+            </span>
+          </div>
+
+          {/* Visual Consensus Bar */}
+          <div className="mb-4">
+            <div className="flex h-3 rounded-full overflow-hidden bg-gray-200">
+              {consensus.green > 0 && (
+                <div
+                  className="bg-green-500 transition-all"
+                  style={{ width: `${(consensus.green / consensus.total) * 100}%` }}
+                />
+              )}
+              {consensus.orange > 0 && (
+                <div
+                  className="bg-orange-500 transition-all"
+                  style={{ width: `${(consensus.orange / consensus.total) * 100}%` }}
+                />
+              )}
+              {consensus.red > 0 && (
+                <div
+                  className="bg-red-500 transition-all"
+                  style={{ width: `${(consensus.red / consensus.total) * 100}%` }}
+                />
+              )}
             </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded-full bg-red-500"></div>
-              <span className="text-sm">{consensus.red}</span>
+            <div className="flex justify-between mt-2 text-xs">
+              <span className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-green-500"></span>
+                <span className="text-gray-600">{consensus.green} Kaufen</span>
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-orange-500"></span>
+                <span className="text-gray-600">{consensus.orange} Prüfen</span>
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-red-500"></span>
+                <span className="text-gray-600">{consensus.red} Ablehnen</span>
+              </span>
             </div>
           </div>
-          {consensus.dominant && (
-            <p className="text-sm text-gray-600">
-              Tendenz: <span className={`font-medium ${
-                consensus.dominant === 'green' ? 'text-green-600' :
-                consensus.dominant === 'orange' ? 'text-orange-600' :
-                'text-red-600'
-              }`}>{RECOMMENDATION_LABELS[consensus.dominant]}</span>
-            </p>
-          )}
-          {avgRepairEstimate > 0 && (
-            <p className="text-sm text-gray-600 mt-2">
-              Ø Reparaturschätzung: <span className="font-medium">{formatCurrency(avgRepairEstimate)}</span>
-            </p>
-          )}
+
+          {/* Summary Stats */}
+          <div className="flex items-center justify-between pt-3 border-t border-gray-200">
+            {consensus.dominant && (
+              <div>
+                <span className="text-xs text-gray-500">Tendenz</span>
+                <p className={`font-semibold ${
+                  consensus.dominant === 'green' ? 'text-green-600' :
+                  consensus.dominant === 'orange' ? 'text-orange-600' :
+                  'text-red-600'
+                }`}>{RECOMMENDATION_LABELS[consensus.dominant]}</p>
+              </div>
+            )}
+            {avgRepairEstimate > 0 && (
+              <div className="text-right">
+                <span className="text-xs text-gray-500">Ø Reparatur</span>
+                <p className="font-semibold text-gray-900">{formatCurrency(avgRepairEstimate)}</p>
+              </div>
+            )}
+          </div>
         </Card>
       )}
 
@@ -1009,10 +1136,19 @@ function AdminReviewsTab({ vehicle, onUpdate }) {
         <div className="space-y-3">
           {vehicle.reviews.map((review) => (
             <Card key={review.id}>
-              <div className="flex justify-between items-start mb-2">
-                <div>
-                  <p className="font-medium text-gray-900">{review.mechanicName}</p>
-                  <p className="text-xs text-gray-500">{formatDateTime(review.createdAt)}</p>
+              <div className="flex justify-between items-start mb-3">
+                <div className="flex items-center gap-3">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold ${
+                    review.recommendation === 'green' ? 'bg-green-500' :
+                    review.recommendation === 'orange' ? 'bg-orange-500' :
+                    review.recommendation === 'red' ? 'bg-red-500' : 'bg-gray-400'
+                  }`}>
+                    {review.mechanicName?.charAt(0)?.toUpperCase() || '?'}
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900">{review.mechanicName}</p>
+                    <p className="text-xs text-gray-500">{formatDateTime(review.createdAt)}</p>
+                  </div>
                 </div>
                 {review.recommendation && (
                   <Badge className={RECOMMENDATION_COLORS[review.recommendation]}>
@@ -1022,25 +1158,26 @@ function AdminReviewsTab({ vehicle, onUpdate }) {
               </div>
 
               {review.repairEstimate > 0 && (
-                <div className="flex justify-between items-center mb-2">
+                <div className="flex justify-between items-center py-2 px-3 bg-gray-50 rounded-lg mb-3">
                   <span className="text-sm text-gray-500">Reparaturschätzung</span>
-                  <span className="font-medium text-gray-900">
+                  <span className="font-semibold text-gray-900">
                     {formatCurrency(review.repairEstimate)}
                   </span>
                 </div>
               )}
 
               {review.comment && (
-                <p className="text-sm text-gray-700 mt-2 pt-2 border-t border-gray-100">
+                <p className="text-sm text-gray-700 leading-relaxed">
                   {review.comment}
                 </p>
               )}
 
               <button
                 onClick={() => handleDeleteReview(review.id)}
-                className="text-xs text-red-600 mt-2"
+                className="flex items-center gap-1.5 text-xs text-red-600 mt-3 pt-3 border-t border-gray-100 hover:text-red-700"
               >
-                Löschen
+                <TrashIcon />
+                <span>Löschen</span>
               </button>
             </Card>
           ))}
@@ -1229,6 +1366,28 @@ function MechanicReviewTab({ vehicle, onUpdate, currentUser, navigate }) {
 function CostsTab({ vehicle, costs, settings }) {
   const ampel = getAmpelStatus(vehicle, settings);
 
+  // SVG Icons (alle in blue-600)
+  const CalculatorIcon = () => (
+    <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+    </svg>
+  );
+  const ListIcon = () => (
+    <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+    </svg>
+  );
+  const ChartIcon = () => (
+    <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+    </svg>
+  );
+  const ExportIcon = () => (
+    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+    </svg>
+  );
+
   const handleExport = () => {
     const data = [
       `Fahrzeug: ${vehicle.title}`,
@@ -1278,58 +1437,74 @@ function CostsTab({ vehicle, costs, settings }) {
   return (
     <div className="space-y-4">
       {/* Max Bid Highlight */}
-      <Card className="bg-blue-50 border-blue-200">
-        <div className="text-center">
-          <p className="text-sm text-blue-600 mb-1">Empfohlenes Maximalgebot</p>
-          <p className="text-3xl font-bold text-blue-700">{formatCurrency(costs.maxBidAED, 'AED')}</p>
-          <p className="text-lg text-blue-600">({formatCurrency(costs.maxBid)})</p>
+      <Card className="bg-blue-50 border-blue-100">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
+            <CalculatorIcon />
+          </div>
+          <h3 className="font-semibold text-blue-900">Maximalgebot</h3>
         </div>
 
-        {/* Calculation breakdown */}
-        <div className="mt-4 pt-4 border-t border-blue-200 text-xs text-blue-700 space-y-1">
-          <p className="font-semibold mb-2">Berechnung:</p>
-          <div className="flex justify-between">
-            <span>Vergleichspreis DE</span>
-            <span>{formatCurrency(costs.marketPrice)}</span>
-          </div>
-          <div className="flex justify-between">
-            <span>- Zielprofit ({costs.targetProfitPct}%)</span>
-            <span>-{formatCurrency(costs.targetProfit)}</span>
-          </div>
-          <div className="flex justify-between">
-            <span>- Sicherheitsabschlag</span>
-            <span>-{formatCurrency(costs.safetyDeduction)}</span>
-          </div>
-          <div className="flex justify-between">
-            <span>- Transport</span>
-            <span>-{formatCurrency(costs.transportCost)}</span>
-          </div>
-          <div className="flex justify-between">
-            <span>- TÜV/Zulassung</span>
-            <span>-{formatCurrency(costs.tuvCost)}</span>
-          </div>
-          <div className="flex justify-between">
-            <span>- Sonstiges</span>
-            <span>-{formatCurrency(costs.miscCost)}</span>
-          </div>
-          <div className="flex justify-between">
-            <span>- Reparatur (gepuffert)</span>
-            <span>-{formatCurrency(costs.repairBuffered)}</span>
-          </div>
-          <div className="flex justify-between pt-2 border-t border-blue-200 font-semibold">
-            <span>Verfügbar für Kauf inkl. Zoll/MwSt</span>
-            <span>{formatCurrency(costs.marketPrice - costs.targetProfit - costs.safetyDeduction - costs.otherCosts)}</span>
-          </div>
-          <div className="flex justify-between">
-            <span>÷ 1,309 (Zoll 10% + MwSt 19%)</span>
-            <span>= {formatCurrency(costs.maxBid)}</span>
-          </div>
+        <div className="text-center py-2">
+          <p className="text-3xl font-bold text-blue-700">{formatCurrency(costs.maxBidAED, 'AED')}</p>
+          <p className="text-sm text-blue-600 mt-1">{formatCurrency(costs.maxBid)}</p>
         </div>
+
+        {/* Calculation breakdown - collapsible style */}
+        <details className="mt-4 pt-4 border-t border-blue-200">
+          <summary className="text-xs text-blue-700 font-medium cursor-pointer hover:text-blue-800">
+            Berechnung anzeigen
+          </summary>
+          <div className="mt-3 text-xs text-blue-700 space-y-1.5">
+            <div className="flex justify-between">
+              <span>Vergleichspreis DE</span>
+              <span>{formatCurrency(costs.marketPrice)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>- Zielprofit ({costs.targetProfitPct}%)</span>
+              <span>-{formatCurrency(costs.targetProfit)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>- Sicherheitsabschlag</span>
+              <span>-{formatCurrency(costs.safetyDeduction)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>- Transport</span>
+              <span>-{formatCurrency(costs.transportCost)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>- TÜV/Zulassung</span>
+              <span>-{formatCurrency(costs.tuvCost)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>- Sonstiges</span>
+              <span>-{formatCurrency(costs.miscCost)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>- Reparatur (gepuffert)</span>
+              <span>-{formatCurrency(costs.repairBuffered)}</span>
+            </div>
+            <div className="flex justify-between pt-2 border-t border-blue-200 font-semibold">
+              <span>Verfügbar inkl. Zoll/MwSt</span>
+              <span>{formatCurrency(costs.marketPrice - costs.targetProfit - costs.safetyDeduction - costs.otherCosts)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>÷ 1,309 (Zoll + MwSt)</span>
+              <span>= {formatCurrency(costs.maxBid)}</span>
+            </div>
+          </div>
+        </details>
       </Card>
 
+      {/* Cost Breakdown */}
       <Card>
-        <h3 className="font-semibold text-gray-900 mb-4">Kostenaufstellung (aktuelles Gebot)</h3>
-        <div className="space-y-3">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
+            <ListIcon />
+          </div>
+          <h3 className="font-semibold text-gray-900">Kostenaufstellung</h3>
+        </div>
+        <div className="space-y-2">
           <CostRow label={`Kaufpreis (${formatCurrency(costs.bidPriceAED, 'AED')})`} value={costs.bidPrice} />
           <CostRow label="Zoll (10%)" value={costs.duty10} />
           <CostRow label="MwSt (19%)" value={costs.vat19} />
@@ -1354,8 +1529,14 @@ function CostsTab({ vehicle, costs, settings }) {
         </div>
       </Card>
 
+      {/* Results */}
       <Card>
-        <h3 className="font-semibold text-gray-900 mb-4">Ergebnis</h3>
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
+            <ChartIcon />
+          </div>
+          <h3 className="font-semibold text-gray-900">Ergebnis</h3>
+        </div>
         <div className="space-y-3">
           <CostRow label="Vergleichspreis DE" value={costs.marketPrice} />
 
@@ -1382,8 +1563,9 @@ function CostsTab({ vehicle, costs, settings }) {
         </div>
       </Card>
 
-      <Button fullWidth variant="secondary" onClick={handleExport}>
-        Kalkulation teilen / exportieren
+      <Button fullWidth variant="secondary" onClick={handleExport} className="flex items-center justify-center gap-2">
+        <ExportIcon />
+        <span>Kalkulation teilen</span>
       </Button>
     </div>
   );
