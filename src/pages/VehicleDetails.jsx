@@ -866,13 +866,27 @@ function DamageTab({ vehicle, onUpdate, costs, isAdmin }) {
           {/* V2: Risk Flags */}
           {report.riskFlags?.length > 0 && (
             <Card className="border-yellow-200 bg-yellow-50">
-              <p className="text-xs text-yellow-700 font-medium mb-2">⚡ Risiko-Flags</p>
+              <p className="text-xs text-yellow-700 font-medium mb-2">⚡ Risiko-Hinweise</p>
               <div className="flex flex-wrap gap-2">
-                {report.riskFlags.map((flag, i) => (
-                  <span key={i} className="text-xs px-2 py-1 rounded bg-yellow-100 text-yellow-800 font-mono">
-                    {flag}
-                  </span>
-                ))}
+                {report.riskFlags.map((flag, i) => {
+                  // Übersetzung der Risk Flags
+                  const translations = {
+                    'HEADLIGHT_MISSING': 'Scheinwerfer fehlt',
+                    'BUMPER_STRUCTURAL_SUSPECT': 'Stoßfänger-Struktur prüfen',
+                    'RADIATOR_SUPPORT_SUSPECT': 'Kühlerträger prüfen',
+                    'ADAS_SENSOR_SUSPECT': 'Fahrassistenz-Sensoren prüfen',
+                    'SUSPENSION_ALIGNMENT_SUSPECT': 'Fahrwerk/Spur prüfen',
+                    'AIRBAG_DEPLOYED_SUSPECT': 'Airbag ausgelöst?',
+                    'FLUID_LEAK_SUSPECT': 'Flüssigkeitsaustritt prüfen',
+                    'FRAME_DAMAGE_SUSPECT': 'Rahmenschaden möglich',
+                  };
+                  const label = translations[flag] || flag;
+                  return (
+                    <span key={i} className="text-xs px-2 py-1 rounded bg-yellow-100 text-yellow-800">
+                      {label}
+                    </span>
+                  );
+                })}
               </div>
             </Card>
           )}
