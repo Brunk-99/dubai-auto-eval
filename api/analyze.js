@@ -11,52 +11,108 @@ const MAX_RETRIES = 5;
 const BASE_WAIT_MS = 2000; // 2 Sekunden Basis-Wartezeit
 
 // Wechselkurs EUR/AED
-const EUR_AED_RATE = 4.00;
+const EUR_AED_RATE = 4.29;
 
 // System-Instruction für KFZ-Gutachter Dubai/VAE
-// ENHANCED: Zusätzliche Felder für technisches vs. wirtschaftliches Severity-Scoring
-const getSystemInstruction = (exchangeRate) => `Du bist ein KFZ-Gutachter für den Zweitmarkt in den VAE. Analysiere den Schaden basierend auf Werkstattpreisen in Al Quoz (Dubai) und Sharjah Industrial Area.
+// V2: Detaillierte Teileliste mit "muss ersetzt werden" und "prüfen"
+const getSystemInstruction = (exchangeRate) => `Du bist ein KFZ-Gutachter für den Zweitmarkt in den VAE. Analysiere den Schaden AUSSCHLIESSLICH anhand der Fotos (kein Raten). Du arbeitest wie ein Werkstatt-Meister, der für den Einkauf/Export eine belastbare Teileliste erstellt.
 
-Nutze für Ersatzteile Preise für gebrauchte Originalteile (Scrap Parts) von Anbietern aus Sharjah (Sajja).
+KONTEXT & PREISE:
+- Werkstattpreise: Al Quoz (Dubai)
+- Gebrauchte Originalteile (Scrap Parts): Sharjah Industrial Area / Sajja
+- Wechselkurs: 1 EUR = ${exchangeRate.toFixed(2)} AED
+- Arbeitslohn: 100–200 AED/Stunde (unabhängige Garagen)
+- Reparatur-Stil: Priorisiere Denting & Painting, aber NUR wenn das Teil erkennbar reparabel ist (nicht gebrochen/fehlend/gerissen).
 
-Der aktuelle Wechselkurs ist 1 EUR = ${exchangeRate.toFixed(2)} AED.
+WICHTIGSTE REGELN (ANTI-ZU-NIEDRIGE KOSTEN):
+1) Gib Kosten IMMER als Range an (low / mid / high), nicht als einzelne Zahl.
+2) Wenn ein Teil fehlt/gebrochen/abgerissen → immer "muss ersetzt werden".
+3) Wenn Sensorik/Leuchten/ADAS-Bauteile betroffen sein könnten → füge Diagnose-/Kalibrieraufwand in "arbeit" als eigenen Posten ein.
+4) Bei Unsicherheit: setze niedrige Konfidenz und schiebe das Teil in "vermutlich_defekt_pruefen" statt "muss_ersetzt_werden".
 
-Berechne die Kosten in AED und rechne sie zusätzlich in EUR um.
-
-Arbeitskosten: Nutze Stundensätze kleinerer, unabhängiger Garagen (ca. 100-200 AED pro Stunde).
-
-Reparatur-Stil: Priorisiere 'Denting & Painting' (Ausbeulen und Lackieren) gegenüber Neukauf von Blechteilen.
-
-WICHTIG: Bei der Schweregrad-Bewertung (1-10) fokussiere dich NUR auf den TECHNISCHEN Schweregrad:
-- 1-3: Kosmetische Schäden (Kratzer, kleine Dellen)
-- 4-6: Mittlere Schäden (Blechteile, Stoßstangen, Scheinwerfer)
-- 7-8: Schwere Schäden (Sicherheitsrelevante Teile, tiefe Strukturschäden)
+TECHNISCHER SCHWEREGRAD (1-10):
+- 1-3: Kosmetisch (Kratzer, kleine Dellen)
+- 4-6: Mittel (Blechteile, Stoßfänger, Scheinwerfer, Anbauteile)
+- 7-8: Schwer (sicherheitsrelevante Teile, tiefe Strukturschäden, fehlende Beleuchtung/Schutzfunktion)
 - 9-10: Totalschaden oder rahmenbedrohende Schäden
+Bewerte NUR technisch. Wirtschaftlich kommt über Kosten.
 
-Die wirtschaftliche Bewertung erfolgt separat über die Kostenangaben.
+DEIN OUTPUT MUSS STRENG JSON SEIN. KEIN TEXT AUSSERHALB JSON.
 
-Gib die Antwort STRENG als JSON aus mit folgendem Schema:
+SCHEMA (EXAKT EINHALTEN):
 {
-  "bauteil": "string (Hauptbauteil das beschädigt ist)",
-  "schaden_analyse": "string (Detaillierte Beschreibung)",
+  "bauteil": "string",
+  "schaden_analyse": "string",
   "schweregrad": 1-10,
-  "reparatur_weg": "Gebrauchtteile/Denting/Lackierung",
-  "kosten_schaetzung_aed": {
-    "teile": number,
-    "arbeit": number,
-    "gesamt": number
+  "fahrbereit": "YES|NO|UNKNOWN",
+  "reparatur_weg": ["Denting", "Lackierung", "Gebrauchtteile", "Neuteil (falls nötig)"],
+
+  "teileliste": {
+    "muss_ersetzt_werden": [
+      {
+        "teil_bezeichnung": "string (so genau wie möglich, z.B. 'Scheinwerfer vorne rechts (komplett)', 'Frontstoßstange Abdeckung', 'Kotflügel vorne rechts')",
+        "grund": "string (welches sichtbare Indiz im Bild: fehlt, gebrochen, eingerissen, stark verformt, Halter abgerissen etc.)",
+        "evidence": "string (kurzer Satz: was genau zu sehen ist)",
+        "confidence": number
+      }
+    ],
+    "vermutlich_defekt_pruefen": [
+      {
+        "teil_bezeichnung": "string (so genau wie möglich)",
+        "verdacht": "string (warum denkst du das: Spaltmaß, Aufprallzone, verdeckte Bereiche, sichtbare Deformation in Nähe etc.)",
+        "pruefung": "string (wie prüfen: Fehlerspeicher, Sichtprüfung Halter, Dichtigkeitsprüfung, Achsvermessung etc.)",
+        "confidence": number
+      }
+    ]
   },
+
+  "kosten_schaetzung_aed": {
+    "teile_range": { "low": number, "mid": number, "high": number },
+    "arbeit_range": { "low": number, "mid": number, "high": number },
+    "gesamt_range": { "low": number, "mid": number, "high": number },
+    "annahmen": [
+      "string (z.B. 'Sharjah scrap parts', 'inkl. Kalibrierung/Diagnose', 'Denting statt Austausch wo möglich')"
+    ]
+  },
+
   "kosten_schaetzung_eur": {
-    "gesamt_euro": number,
+    "gesamt_range_eur": { "low": number, "mid": number, "high": number },
     "umrechnungskurs": ${exchangeRate.toFixed(2)}
   },
-  "location_tipp": "z.B. Sharjah Industrial Area oder Al Quoz",
-  "fahrbereit": boolean,
-  "affected_parts": ["string (Liste aller beschädigten Teile)"],
-  "risk_flags": ["string (z.B. HEADLIGHT_MISSING, STRUCTURAL_SUSPECT, AIRBAG_RISK, FLUID_LEAK)"]
+
+  "arbeitszeit_schaetzung": {
+    "stunden_range": { "low": number, "mid": number, "high": number },
+    "posten": [
+      { "name": "Demontage/Montage", "stunden": number },
+      { "name": "Denting", "stunden": number },
+      { "name": "Lackierung", "stunden": number },
+      { "name": "Diagnose/Kalibrierung (falls zutreffend)", "stunden": number }
+    ]
+  },
+
+  "location_tipp": "Sharjah Industrial Area / Sajja oder Al Quoz",
+
+  "risk_flags": [
+    "HEADLIGHT_MISSING",
+    "BUMPER_STRUCTURAL_SUSPECT",
+    "RADIATOR_SUPPORT_SUSPECT",
+    "ADAS_SENSOR_SUSPECT",
+    "SUSPENSION_ALIGNMENT_SUSPECT",
+    "AIRBAG_DEPLOYED_SUSPECT",
+    "FLUID_LEAK_SUSPECT",
+    "FRAME_DAMAGE_SUSPECT"
+  ],
+
+  "affected_parts": ["string"]
 }
 
-Wichtig: Antworte NUR im JSON-Format ohne zusätzlichen Text.`;
+ZUSATZREGELN:
+- confidence ist 0..1
+- "muss_ersetzt_werden" NUR wenn es aus den Fotos eindeutig ist (fehlend, gebrochen, abgerissen, stark deformiert).
+- "vermutlich_defekt_pruefen" für verdeckte/typische Folgeschäden in der Aufprallzone.
+- Nenne Teil-Bezeichnungen so, dass ich sie 1:1 suchen/bestellen kann (rechts/links, vorne/hinten, komplett/halter, abdeckung, träger etc.).
+- Keine Fantasie-Teile. Wenn du es nicht sehen kannst: prüf-liste statt muss-liste.
+- Antworte NUR mit JSON.`;
 
 // Sleep helper
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));

@@ -712,8 +712,173 @@ function DamageTab({ vehicle, onUpdate, costs, isAdmin }) {
             )}
           </Card>
 
-          {/* Damaged Parts with Hours */}
-          {report.damageDetails?.length > 0 && (
+          {/* V2: Teileliste - Muss ersetzt werden */}
+          {report.teileliste?.mussErsetztWerden?.length > 0 && (
+            <Card className="border-red-200 bg-red-50">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-red-600 text-lg">⚠️</span>
+                <p className="text-sm font-semibold text-red-800">Muss ersetzt werden ({report.teileliste.mussErsetztWerden.length} Teile)</p>
+              </div>
+              <div className="space-y-3">
+                {report.teileliste.mussErsetztWerden.map((teil, i) => (
+                  <div key={i} className="bg-white rounded-lg p-3 border border-red-100">
+                    <div className="flex items-start justify-between mb-1">
+                      <p className="font-medium text-gray-900">{teil.teilBezeichnung}</p>
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${
+                        teil.confidence >= 0.8 ? 'bg-green-100 text-green-700' :
+                        teil.confidence >= 0.5 ? 'bg-yellow-100 text-yellow-700' :
+                        'bg-gray-100 text-gray-600'
+                      }`}>
+                        {Math.round(teil.confidence * 100)}%
+                      </span>
+                    </div>
+                    <p className="text-sm text-red-700 mb-1">
+                      <span className="font-medium">Grund:</span> {teil.grund}
+                    </p>
+                    {teil.evidence && (
+                      <p className="text-xs text-gray-500 italic">"{teil.evidence}"</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
+
+          {/* V2: Teileliste - Prüfen */}
+          {report.teileliste?.vermutlichDefektPruefen?.length > 0 && (
+            <Card className="border-orange-200 bg-orange-50">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-orange-600 text-lg">🔍</span>
+                <p className="text-sm font-semibold text-orange-800">Prüfen ({report.teileliste.vermutlichDefektPruefen.length} Teile)</p>
+              </div>
+              <div className="space-y-3">
+                {report.teileliste.vermutlichDefektPruefen.map((teil, i) => (
+                  <div key={i} className="bg-white rounded-lg p-3 border border-orange-100">
+                    <div className="flex items-start justify-between mb-1">
+                      <p className="font-medium text-gray-900">{teil.teilBezeichnung}</p>
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${
+                        teil.confidence >= 0.8 ? 'bg-green-100 text-green-700' :
+                        teil.confidence >= 0.5 ? 'bg-yellow-100 text-yellow-700' :
+                        'bg-gray-100 text-gray-600'
+                      }`}>
+                        {Math.round(teil.confidence * 100)}%
+                      </span>
+                    </div>
+                    <p className="text-sm text-orange-700 mb-1">
+                      <span className="font-medium">Verdacht:</span> {teil.verdacht}
+                    </p>
+                    <p className="text-xs text-gray-600">
+                      <span className="font-medium">Prüfung:</span> {teil.pruefung}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
+
+          {/* V2: Kostenübersicht mit Ranges */}
+          {report.kostenAed?.gesamtRange && (
+            <Card>
+              <p className="text-xs text-gray-500 mb-3">Kostenübersicht (Dubai-Markt)</p>
+              <div className="space-y-3">
+                {/* Gesamt Range */}
+                <div className="bg-blue-50 rounded-lg p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium text-gray-700">Gesamtkosten</span>
+                    <span className="font-bold text-blue-700">
+                      {report.kostenAed.gesamtRange.low.toLocaleString('de-DE')} - {report.kostenAed.gesamtRange.high.toLocaleString('de-DE')} AED
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-500">Realistisch (mid)</span>
+                    <span className="font-medium text-gray-700">{report.kostenAed.gesamtRange.mid.toLocaleString('de-DE')} AED</span>
+                  </div>
+                  {report.kostenEur?.gesamtRange && (
+                    <div className="flex items-center justify-between text-sm mt-1 pt-1 border-t border-blue-100">
+                      <span className="text-gray-500">In Euro (Kurs {report.kostenEur.kurs})</span>
+                      <span className="font-medium text-gray-700">
+                        {report.kostenEur.gesamtRange.low.toLocaleString('de-DE')} - {report.kostenEur.gesamtRange.high.toLocaleString('de-DE')} €
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Teile + Arbeit Breakdown */}
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="bg-gray-50 rounded-lg p-2">
+                    <p className="text-xs text-gray-500 mb-1">Teile</p>
+                    <p className="text-sm font-medium text-gray-800">
+                      {report.kostenAed.teileRange?.mid?.toLocaleString('de-DE') || '–'} AED
+                    </p>
+                    <p className="text-xs text-gray-400">
+                      {report.kostenAed.teileRange?.low?.toLocaleString('de-DE')} - {report.kostenAed.teileRange?.high?.toLocaleString('de-DE')}
+                    </p>
+                  </div>
+                  <div className="bg-gray-50 rounded-lg p-2">
+                    <p className="text-xs text-gray-500 mb-1">Arbeit</p>
+                    <p className="text-sm font-medium text-gray-800">
+                      {report.kostenAed.arbeitRange?.mid?.toLocaleString('de-DE') || '–'} AED
+                    </p>
+                    <p className="text-xs text-gray-400">
+                      {report.kostenAed.arbeitRange?.low?.toLocaleString('de-DE')} - {report.kostenAed.arbeitRange?.high?.toLocaleString('de-DE')}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Annahmen */}
+                {report.kostenAed.annahmen?.length > 0 && (
+                  <div className="text-xs text-gray-500">
+                    <p className="font-medium mb-1">Annahmen:</p>
+                    <ul className="list-disc list-inside space-y-0.5">
+                      {report.kostenAed.annahmen.map((a, i) => (
+                        <li key={i}>{a}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            </Card>
+          )}
+
+          {/* V2: Arbeitszeit-Aufschlüsselung */}
+          {report.arbeitszeitSchaetzung?.posten?.length > 0 && (
+            <Card>
+              <p className="text-xs text-gray-500 mb-3">Arbeitszeit-Aufschlüsselung</p>
+              <div className="space-y-2">
+                {report.arbeitszeitSchaetzung.posten.filter(p => p.stunden > 0).map((posten, i) => (
+                  <div key={i} className="flex items-center justify-between py-1 border-b border-gray-100 last:border-0">
+                    <span className="text-sm text-gray-700">{posten.name}</span>
+                    <span className="text-sm font-medium text-gray-900">{posten.stunden}h</span>
+                  </div>
+                ))}
+                {report.arbeitszeitSchaetzung.stundenRange && (
+                  <div className="flex items-center justify-between pt-2 border-t border-gray-200">
+                    <span className="text-sm font-medium text-gray-700">Gesamt</span>
+                    <span className="text-sm font-bold text-gray-900">
+                      {report.arbeitszeitSchaetzung.stundenRange.low} - {report.arbeitszeitSchaetzung.stundenRange.high}h
+                    </span>
+                  </div>
+                )}
+              </div>
+            </Card>
+          )}
+
+          {/* V2: Risk Flags */}
+          {report.riskFlags?.length > 0 && (
+            <Card className="border-yellow-200 bg-yellow-50">
+              <p className="text-xs text-yellow-700 font-medium mb-2">⚡ Risiko-Flags</p>
+              <div className="flex flex-wrap gap-2">
+                {report.riskFlags.map((flag, i) => (
+                  <span key={i} className="text-xs px-2 py-1 rounded bg-yellow-100 text-yellow-800 font-mono">
+                    {flag}
+                  </span>
+                ))}
+              </div>
+            </Card>
+          )}
+
+          {/* Legacy: Damaged Parts with Hours (fallback für alte Reports) */}
+          {!report.teileliste && report.damageDetails?.length > 0 && (
             <Card>
               <p className="text-xs text-gray-500 mb-3">Beschädigte Teile</p>
               <div className="space-y-2">
@@ -733,11 +898,11 @@ function DamageTab({ vehicle, onUpdate, costs, isAdmin }) {
           )}
 
           {/* Affected Areas */}
-          {report.affectedAreas?.length > 0 && (
+          {report.affectedParts?.length > 0 && (
             <Card>
               <p className="text-xs text-gray-500 mb-2">Betroffene Bereiche</p>
               <div className="flex flex-wrap gap-2">
-                {report.affectedAreas.map((area, i) => (
+                {report.affectedParts.map((area, i) => (
                   <Badge key={i} variant="default">{area}</Badge>
                 ))}
               </div>

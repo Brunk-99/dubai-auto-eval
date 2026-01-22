@@ -465,23 +465,84 @@ function parseGeminiResponse(responseText) {
     }
   }
 
-  // Dubai/VAE Format mit AED und EUR
+  // Dubai/VAE Format V2 mit Teileliste und Kostenranges
+  const kostenAed = parsed.kosten_schaetzung_aed || {};
+  const kostenEur = parsed.kosten_schaetzung_eur || {};
+
+  // Unterstütze sowohl altes Format (einzelne Zahlen) als auch neues Format (Ranges)
+  const getKostenValue = (rangeOrValue, field = 'mid') => {
+    if (typeof rangeOrValue === 'number') return rangeOrValue;
+    if (rangeOrValue && typeof rangeOrValue === 'object') {
+      return rangeOrValue[field] || rangeOrValue.mid || 0;
+    }
+    return 0;
+  };
+
+  // Fahrbereit kann jetzt "YES", "NO", "UNKNOWN" oder boolean sein
+  const parseFahrbereit = (value) => {
+    if (typeof value === 'boolean') return value ? 'YES' : 'NO';
+    if (typeof value === 'string') return value.toUpperCase();
+    return 'UNKNOWN';
+  };
+
   return {
     bauteil: parsed.bauteil || 'Unbekannt',
     schadenAnalyse: parsed.schaden_analyse || parsed.schadenAnalyse || '',
     schweregrad: Math.min(10, Math.max(1, parsed.schweregrad || 5)),
     reparaturWeg: parsed.reparatur_weg || parsed.reparaturWeg || 'Nicht bestimmt',
+
+    // Neue Teileliste
+    teileliste: {
+      mussErsetztWerden: (parsed.teileliste?.muss_ersetzt_werden || []).map(t => ({
+        teilBezeichnung: t.teil_bezeichnung || t.teilBezeichnung || '',
+        grund: t.grund || '',
+        evidence: t.evidence || '',
+        confidence: t.confidence || 0.5,
+      })),
+      vermutlichDefektPruefen: (parsed.teileliste?.vermutlich_defekt_pruefen || []).map(t => ({
+        teilBezeichnung: t.teil_bezeichnung || t.teilBezeichnung || '',
+        verdacht: t.verdacht || '',
+        pruefung: t.pruefung || '',
+        confidence: t.confidence || 0.5,
+      })),
+    },
+
+    // Kosten mit Ranges (V2) und Fallback für altes Format
     kostenAed: {
-      teile: parsed.kosten_schaetzung_aed?.teile || 0,
-      arbeit: parsed.kosten_schaetzung_aed?.arbeit || 0,
-      gesamt: parsed.kosten_schaetzung_aed?.gesamt || 0,
+      teileRange: kostenAed.teile_range || { low: kostenAed.teile || 0, mid: kostenAed.teile || 0, high: kostenAed.teile || 0 },
+      arbeitRange: kostenAed.arbeit_range || { low: kostenAed.arbeit || 0, mid: kostenAed.arbeit || 0, high: kostenAed.arbeit || 0 },
+      gesamtRange: kostenAed.gesamt_range || { low: kostenAed.gesamt || 0, mid: kostenAed.gesamt || 0, high: kostenAed.gesamt || 0 },
+      annahmen: kostenAed.annahmen || [],
+      // Legacy single values (mid-point für Kompatibilität)
+      teile: getKostenValue(kostenAed.teile_range || kostenAed.teile),
+      arbeit: getKostenValue(kostenAed.arbeit_range || kostenAed.arbeit),
+      gesamt: getKostenValue(kostenAed.gesamt_range || kostenAed.gesamt),
     },
     kostenEur: {
-      gesamt: parsed.kosten_schaetzung_eur?.gesamt_euro || 0,
-      kurs: parsed.kosten_schaetzung_eur?.umrechnungskurs || 4.0,
+      gesamtRange: kostenEur.gesamt_range_eur || {
+        low: kostenEur.gesamt_euro || 0,
+        mid: kostenEur.gesamt_euro || 0,
+        high: kostenEur.gesamt_euro || 0
+      },
+      kurs: kostenEur.umrechnungskurs || 4.29,
+      // Legacy single value
+      gesamt: getKostenValue(kostenEur.gesamt_range_eur || kostenEur.gesamt_euro),
     },
+
+    // Arbeitszeitschätzung (neu)
+    arbeitszeitSchaetzung: parsed.arbeitszeit_schaetzung ? {
+      stundenRange: parsed.arbeitszeit_schaetzung.stunden_range || { low: 0, mid: 0, high: 0 },
+      posten: (parsed.arbeitszeit_schaetzung.posten || []).map(p => ({
+        name: p.name || '',
+        stunden: p.stunden || 0,
+      })),
+    } : null,
+
     locationTipp: parsed.location_tipp || parsed.locationTipp || 'Sharjah Industrial Area',
-    fahrbereit: parsed.fahrbereit !== false,
+    fahrbereit: parseFahrbereit(parsed.fahrbereit),
+    riskFlags: parsed.risk_flags || [],
+    affectedParts: parsed.affected_parts || [],
+
     // Legacy fields for compatibility
     severity: parsed.schweregrad <= 3 ? 'low' : parsed.schweregrad <= 6 ? 'medium' : 'high',
     severityScore: parsed.schweregrad * 10,
@@ -526,7 +587,7 @@ export async function analyzeVehicleDamage(photos, vehicleInfo = {}, options = {
     const analysis = parseGeminiResponse(result.text);
     console.log('[AI] Parsed:', analysis);
 
-    // Build base report
+    // Build base report - V2 with parts list and cost ranges
     const baseReport = {
       createdAt: new Date().toISOString(),
       // Dubai/VAE specific
@@ -538,14 +599,25 @@ export async function analyzeVehicleDamage(photos, vehicleInfo = {}, options = {
       kostenEur: analysis.kostenEur,
       locationTipp: analysis.locationTipp,
       fahrbereit: analysis.fahrbereit,
+
+      // V2: Detaillierte Teileliste
+      teileliste: analysis.teileliste,
+
+      // V2: Arbeitszeitschätzung
+      arbeitszeitSchaetzung: analysis.arbeitszeitSchaetzung,
+
+      // V2: Risk Flags und Affected Parts
+      riskFlags: analysis.riskFlags || [],
+      affectedParts: analysis.affectedParts || [],
+
       // Legacy compatibility (kept for backward compatibility)
       severity: analysis.severity,
       severityScore: analysis.severityScore,
       summary: analysis.schadenAnalyse,
-      affectedAreas: [analysis.bauteil],
+      affectedAreas: [analysis.bauteil, ...(analysis.affectedParts || [])],
       damageDetails: [{
         area: analysis.bauteil,
-        type: analysis.reparaturWeg,
+        type: Array.isArray(analysis.reparaturWeg) ? analysis.reparaturWeg.join(', ') : analysis.reparaturWeg,
         repairHours: Math.ceil(analysis.kostenAed.arbeit / 150), // ~150 AED/Stunde
         confidence: analysis.confidence,
       }],
@@ -553,7 +625,8 @@ export async function analyzeVehicleDamage(photos, vehicleInfo = {}, options = {
       totalRepairHours: Math.ceil(analysis.kostenAed.arbeit / 150),
       estimatedRepairCost: analysis.kostenEur.gesamt,
       estimatedRepairCostAed: analysis.kostenAed.gesamt,
-      warnings: analysis.fahrbereit ? [] : ['Fahrzeug möglicherweise nicht fahrbereit'],
+      warnings: analysis.fahrbereit === 'NO' ? ['Fahrzeug nicht fahrbereit'] :
+                analysis.fahrbereit === 'UNKNOWN' ? ['Fahrbereitschaft unklar - prüfen'] : [],
       recommendations: [`Reparatur in ${analysis.locationTipp} empfohlen`],
       photosAnalyzed: photoCount,
       vehicleInfo: {
