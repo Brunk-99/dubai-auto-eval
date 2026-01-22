@@ -214,119 +214,94 @@ export default function VehicleDetails() {
 
 // ============ INFO TAB ============
 function InfoTab({ vehicle, isAdmin }) {
-  // SVG Icons (alle in blue-600, mit aria-hidden für dekorative Icons)
-  const StatusIcon = () => (
-    <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-    </svg>
-  );
-  const CarIcon = () => (
-    <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" />
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" />
-    </svg>
-  );
-  const MoneyIcon = () => (
-    <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-    </svg>
-  );
-  const LocationIcon = () => (
-    <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-    </svg>
-  );
-  const ClockIcon = () => (
-    <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-    </svg>
-  );
+  // Fahrzeugdaten als Grid-Items vorbereiten
+  const vehicleSpecs = [
+    vehicle.year && { label: 'Baujahr', value: vehicle.year },
+    vehicle.color && { label: 'Farbe', value: vehicle.color },
+    vehicle.mileage && { label: 'Kilometer', value: `${formatMileage(vehicle.mileage)} km` },
+    vehicle.auctionLocation && { label: 'Auktion', value: vehicle.auctionLocation },
+  ].filter(Boolean);
 
   return (
     <div className="space-y-4">
-      {/* Status Section */}
-      <Card>
-        <div className="flex items-center gap-3 mb-3">
-          <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
-            <StatusIcon />
-          </div>
-          <h3 className="font-semibold text-gray-900">Status</h3>
+      {/* Hero Card: Status + Kerndaten */}
+      <Card className="overflow-hidden">
+        {/* Status Badge oben */}
+        <div className="flex items-center justify-between mb-5">
+          <Badge className={`${STATUS_COLORS[vehicle.status]} text-sm px-3 py-1.5`}>
+            {STATUS_LABELS[vehicle.status]}
+          </Badge>
+          {vehicle.vin && (
+            <span className="text-xs text-gray-400 font-mono tracking-wide">
+              {vehicle.vin}
+            </span>
+          )}
         </div>
-        <Badge className={`${STATUS_COLORS[vehicle.status]} text-sm px-3 py-1.5`}>
-          {STATUS_LABELS[vehicle.status]}
-        </Badge>
-      </Card>
 
-      {/* Vehicle Data Section */}
-      <Card>
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
-            <CarIcon />
+        {/* Specs Grid - kompakt, 2 Spalten */}
+        {vehicleSpecs.length > 0 && (
+          <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+            {vehicleSpecs.map(({ label, value }) => (
+              <div key={label}>
+                <p className="text-xs text-gray-400 uppercase tracking-wide mb-0.5">{label}</p>
+                <p className="text-gray-900 font-medium tabular-nums">{value}</p>
+              </div>
+            ))}
           </div>
-          <h3 className="font-semibold text-gray-900">Fahrzeugdaten</h3>
-        </div>
-        <div className="space-y-3">
-          {vehicle.year && <InfoRow label="Baujahr">{vehicle.year}</InfoRow>}
-          {vehicle.color && <InfoRow label="Farbe">{vehicle.color}</InfoRow>}
-          {vehicle.mileage && <InfoRow label="Kilometerstand">{formatMileage(vehicle.mileage)} km</InfoRow>}
-          {vehicle.vin && <InfoRow label="VIN" mono>{vehicle.vin}</InfoRow>}
-        </div>
+        )}
       </Card>
-
-      {/* Auction Section */}
-      {vehicle.auctionLocation && (
-        <Card>
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
-              <LocationIcon />
-            </div>
-            <h3 className="font-semibold text-gray-900">Auktion</h3>
-          </div>
-          <InfoRow label="Auktionsort">{vehicle.auctionLocation}</InfoRow>
-        </Card>
-      )}
 
       {/* Financial Info - Admin Only */}
-      {isAdmin && (
+      {isAdmin && (vehicle.startBid || vehicle.finalBid || vehicle.marketPriceDE) && (
         <Card>
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
-              <MoneyIcon />
-            </div>
-            <h3 className="font-semibold text-gray-900">Finanzdaten</h3>
-          </div>
-          <div className="space-y-3">
-            <InfoRow label="Startgebot">{formatCurrency(vehicle.startBid, 'AED')}</InfoRow>
-            <InfoRow label="Endpreis">{formatCurrency(vehicle.finalBid, 'AED')}</InfoRow>
-            <InfoRow label="Vergleichspreis DE" highlight>{formatCurrency(vehicle.marketPriceDE)}</InfoRow>
+          <h3 className="text-xs text-gray-400 uppercase tracking-wide mb-4">Finanzen</h3>
+
+          {/* Preise als horizontale Reihe */}
+          <div className="flex items-end justify-between gap-4">
+            {vehicle.startBid > 0 && (
+              <div className="min-w-0">
+                <p className="text-xs text-gray-400 mb-0.5">Start</p>
+                <p className="text-gray-600 tabular-nums text-sm">{formatCurrency(vehicle.startBid, 'AED')}</p>
+              </div>
+            )}
+            {vehicle.finalBid > 0 && (
+              <div className="min-w-0">
+                <p className="text-xs text-gray-400 mb-0.5">Endpreis</p>
+                <p className="text-gray-900 font-semibold tabular-nums">{formatCurrency(vehicle.finalBid, 'AED')}</p>
+              </div>
+            )}
+            {vehicle.marketPriceDE > 0 && (
+              <div className="min-w-0 text-right ml-auto">
+                <p className="text-xs text-gray-400 mb-0.5">Markt DE</p>
+                <p className="text-blue-600 font-semibold tabular-nums">{formatCurrency(vehicle.marketPriceDE)}</p>
+              </div>
+            )}
           </div>
         </Card>
       )}
 
-      {/* Notes Section */}
+      {/* Notes Section - nur wenn vorhanden */}
       {vehicle.notes && (
         <Card>
-          <p className="text-xs text-gray-500 uppercase tracking-wide mb-2">Notizen</p>
-          <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">{vehicle.notes}</p>
+          <h3 className="text-xs text-gray-400 uppercase tracking-wide mb-2">Notizen</h3>
+          <p className="text-gray-700 whitespace-pre-wrap leading-relaxed text-sm">{vehicle.notes}</p>
         </Card>
       )}
 
-      {/* Meta Info */}
-      <Card className="bg-gray-50 border-gray-200">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center">
-            <ClockIcon />
-          </div>
-          <h3 className="font-semibold text-gray-900 text-sm">Verlauf</h3>
+      {/* Meta Info - dezent am Ende */}
+      <div className="pt-2 border-t border-gray-100">
+        <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-400">
+          {vehicle.createdBy && (
+            <span>Erstellt von {vehicle.createdBy.name}</span>
+          )}
+          <span>{formatDateTime(vehicle.createdAt)}</span>
+          {vehicle.updatedAt !== vehicle.createdAt && (
+            <span className="text-gray-300">
+              Aktualisiert {formatDateTime(vehicle.updatedAt)}
+            </span>
+          )}
         </div>
-        <div className="text-xs text-gray-500 space-y-1">
-          {vehicle.createdBy && <p>Erstellt von: {vehicle.createdBy.name}</p>}
-          <p>Erstellt: {formatDateTime(vehicle.createdAt)}</p>
-          {vehicle.updatedBy && <p>Bearbeitet von: {vehicle.updatedBy.name}</p>}
-          <p>Aktualisiert: {formatDateTime(vehicle.updatedAt)}</p>
-        </div>
-      </Card>
+      </div>
     </div>
   );
 }
