@@ -41,6 +41,7 @@ export function TabsTrigger({ value, children, className = '' }) {
       onClick={() => context?.onChange(value)}
       className={`
         flex-1 min-w-0 px-4 py-2.5 min-h-[44px]
+        flex items-center justify-center
         text-sm font-medium rounded-lg
         transition-colors whitespace-nowrap
         ${isActive
