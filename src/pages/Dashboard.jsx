@@ -181,26 +181,17 @@ export default function Dashboard() {
         }
       />
 
-      {/* User info bar - Enhanced */}
-      <div className="px-4 py-3 bg-gradient-to-r from-gray-50 to-white border-b border-gray-100">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
-              <span className="text-white font-bold text-lg">{currentUser?.name?.charAt(0)}</span>
-            </div>
-            <div>
-              <p className="font-semibold text-gray-900">{currentUser?.name}</p>
-              <p className={`text-xs font-medium px-2 py-0.5 rounded-full inline-block mt-0.5 ${
-                userIsAdmin
-                  ? 'bg-purple-100 text-purple-700'
-                  : 'bg-blue-100 text-blue-700'
-              }`}>
-                {userIsAdmin ? '👑 Admin' : '🔧 Mechaniker'}
-              </p>
-            </div>
+      {/* User info bar */}
+      <div className="px-4 py-2 bg-gray-100 border-b border-gray-200">
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 bg-blue-100 rounded-full flex items-center justify-center">
+            <span className="text-blue-600 font-bold text-sm">{currentUser?.name?.charAt(0)}</span>
           </div>
-          <div className="text-right text-xs text-gray-400">
-            <p>Willkommen zurück!</p>
+          <div>
+            <span className="text-sm font-medium text-gray-700">{currentUser?.name}</span>
+            <span className="text-xs text-gray-400 ml-2">
+              {userIsAdmin ? 'Admin' : 'Mechaniker'}
+            </span>
           </div>
         </div>
       </div>
@@ -239,33 +230,32 @@ export default function Dashboard() {
         />
       </div>
 
-      {/* Stats summary for Admin - Enhanced */}
+      {/* Stats summary for Admin */}
       {userIsAdmin && vehicles.length > 0 && (
-        <div className="px-4 py-4 bg-gradient-to-r from-blue-600 to-blue-500 shadow-lg">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-blue-100 text-xs uppercase tracking-wider">Fahrzeuge</p>
-              <p className="text-white text-2xl font-bold">{filteredAndSortedVehicles.length}</p>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="flex flex-col items-center bg-white/10 rounded-xl px-3 py-2">
-                <div className="w-4 h-4 rounded-full bg-green-400 shadow-lg shadow-green-500/30"></div>
-                <span className="text-white font-bold text-lg mt-1">
+        <div className="px-4 py-3 bg-blue-50 border-b border-blue-100">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-blue-600">
+              {filteredAndSortedVehicles.length} Fahrzeuge
+            </span>
+            <div className="flex items-center gap-4">
+              <span className="flex items-center gap-1">
+                <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                <span className="text-gray-600">
                   {filteredAndSortedVehicles.filter(v => getAmpelStatus(v, settings).color === 'green').length}
                 </span>
-              </div>
-              <div className="flex flex-col items-center bg-white/10 rounded-xl px-3 py-2">
-                <div className="w-4 h-4 rounded-full bg-yellow-400 shadow-lg shadow-yellow-500/30"></div>
-                <span className="text-white font-bold text-lg mt-1">
+              </span>
+              <span className="flex items-center gap-1">
+                <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                <span className="text-gray-600">
                   {filteredAndSortedVehicles.filter(v => getAmpelStatus(v, settings).color === 'yellow').length}
                 </span>
-              </div>
-              <div className="flex flex-col items-center bg-white/10 rounded-xl px-3 py-2">
-                <div className="w-4 h-4 rounded-full bg-red-400 shadow-lg shadow-red-500/30"></div>
-                <span className="text-white font-bold text-lg mt-1">
+              </span>
+              <span className="flex items-center gap-1">
+                <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                <span className="text-gray-600">
                   {filteredAndSortedVehicles.filter(v => getAmpelStatus(v, settings).color === 'red').length}
                 </span>
-              </div>
+              </span>
             </div>
           </div>
         </div>
@@ -320,169 +310,131 @@ function VehicleCard({ vehicle, settings, isAdmin, currentUser, onClick }) {
   const costs = calculateCosts(vehicle, settings);
   const ampel = getAmpelStatus(vehicle, settings);
   const consensus = getReviewConsensus(vehicle.reviews);
-  // Thumbnail kommt aus separatem Storage (thumbnailPhoto) oder aus photos Array
   const thumbnail = vehicle.thumbnailPhoto?.data || vehicle.photos?.[0]?.data;
 
-  // For mechanics: check if they've reviewed this vehicle
   const myReview = !isAdmin
     ? (vehicle.reviews || []).find(r => r.mechanicId === currentUser?.id)
     : null;
 
-  // Check if vehicle has any reviews (for admin view)
   const hasReviews = (vehicle.reviews || []).length > 0;
 
-  // Get border color based on ampel status
-  const getBorderColor = () => {
-    switch (ampel.color) {
-      case 'green': return 'border-l-green-500';
-      case 'yellow': return 'border-l-yellow-500';
-      case 'red': return 'border-l-red-500';
-      default: return 'border-l-gray-300';
-    }
-  };
-
-  // Get background gradient based on review status
-  const getCardBackground = () => {
+  const getCardClassName = () => {
     if (isAdmin) {
-      return hasReviews ? 'bg-gradient-to-r from-green-50/50 to-white' : 'bg-gradient-to-r from-orange-50/50 to-white';
+      return hasReviews
+        ? 'flex gap-3 border-l-4 border-l-green-500 bg-green-50/30'
+        : 'flex gap-3 border-l-4 border-l-orange-500 bg-orange-50/30';
     } else {
-      return myReview ? 'bg-gradient-to-r from-green-50/50 to-white' : 'bg-gradient-to-r from-orange-50/50 to-white';
+      return myReview
+        ? 'flex gap-3 border-l-4 border-l-green-500 bg-green-50/30'
+        : 'flex gap-3 border-l-4 border-l-orange-500 bg-orange-50/30';
     }
   };
 
   return (
-    <div
-      onClick={onClick}
-      className={`relative rounded-2xl border border-gray-100 shadow-sm overflow-hidden cursor-pointer transition-all duration-200 hover:shadow-md hover:scale-[1.01] active:scale-[0.99] ${getCardBackground()}`}
-    >
-      {/* Left accent border */}
-      <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${getBorderColor()}`} />
-
-      <div className="flex gap-3 p-4 pl-5">
-        {/* Thumbnail with enhanced styling */}
-        <div className="w-24 h-24 flex-shrink-0 bg-gradient-to-br from-gray-100 to-gray-50 rounded-xl overflow-hidden relative shadow-inner">
-          {thumbnail ? (
-            <img
-              src={thumbnail}
-              alt={vehicle.title}
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-gray-300">
-              <svg className="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-            </div>
-          )}
-          {/* Photo count badge */}
-          {(vehicle.photoCount || vehicle.photos?.length || 0) > 1 && (
-            <div className="absolute bottom-1.5 right-1.5 bg-black/70 text-white text-xs px-2 py-0.5 rounded-lg font-medium backdrop-blur-sm">
-              📷 {vehicle.photoCount || vehicle.photos?.length}
-            </div>
-          )}
-          {/* Ampel indicator overlay */}
-          <div className="absolute top-1.5 right-1.5">
-            <Ampel status={ampel} size="sm" />
+    <Card onClick={onClick} className={getCardClassName()}>
+      {/* Thumbnail */}
+      <div className="w-20 h-20 flex-shrink-0 bg-gray-100 rounded-xl overflow-hidden relative">
+        {thumbnail ? (
+          <img
+            src={thumbnail}
+            alt={vehicle.title}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-gray-300">
+            <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
           </div>
+        )}
+        {(vehicle.photoCount || vehicle.photos?.length || 0) > 1 && (
+          <div className="absolute bottom-1 right-1 bg-black/60 text-white text-xs px-1.5 py-0.5 rounded">
+            {vehicle.photoCount || vehicle.photos?.length}
+          </div>
+        )}
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-start justify-between gap-2">
+          <h3 className="font-semibold text-gray-900 truncate">
+            {vehicle.title || 'Ohne Titel'}
+          </h3>
+          <Ampel status={ampel} size="md" />
         </div>
 
-        {/* Content */}
-        <div className="flex-1 min-w-0 flex flex-col justify-between">
-          {/* Header row */}
-          <div>
-            <h3 className="font-bold text-gray-900 truncate text-base">
-              {vehicle.title || 'Ohne Titel'}
-            </h3>
-            <div className="flex items-center gap-2 mt-1.5">
-              <Badge className={`${STATUS_COLORS[vehicle.status]} shadow-sm`}>
-                {STATUS_LABELS[vehicle.status]}
-              </Badge>
-              {vehicle.color && (
-                <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">{vehicle.color}</span>
-              )}
-              {vehicle.year && (
-                <span className="text-xs text-gray-400">{vehicle.year}</span>
-              )}
-            </div>
-          </div>
+        <div className="flex items-center gap-2 mt-1">
+          <Badge className={STATUS_COLORS[vehicle.status]}>
+            {STATUS_LABELS[vehicle.status]}
+          </Badge>
+          {vehicle.color && (
+            <span className="text-xs text-gray-500">{vehicle.color}</span>
+          )}
+        </div>
 
-          {/* Admin view: Enhanced financial display */}
-          {isAdmin && (
-            <div className="mt-2">
-              <div className="flex items-end justify-between">
-                <div className="flex flex-col gap-0.5">
-                  {/* Start Bid (converted to EUR) */}
-                  {(vehicle.startBid || vehicle.finalBid) > 0 && (
-                    <div className="flex items-center gap-1">
-                      <span className="text-[10px] text-gray-400 uppercase tracking-wide">Start</span>
-                      <span className="text-sm font-medium text-gray-600">
-                        {formatCurrency(aedToEur(vehicle.finalBid || vehicle.startBid))}
-                      </span>
-                    </div>
-                  )}
-                  {/* Max Bid (EUR) */}
-                  <div className="flex items-center gap-1">
-                    <span className="text-[10px] text-blue-500 uppercase tracking-wide">Max</span>
-                    <span className="text-sm font-bold text-blue-600">
-                      {formatCurrency(costs.maxBid)}
-                    </span>
-                  </div>
+        {/* Admin view */}
+        {isAdmin && (
+          <div className="flex items-center justify-between mt-2 text-sm">
+            <div className="flex items-center gap-3">
+              {(vehicle.startBid || vehicle.finalBid) > 0 && (
+                <div>
+                  <span className="text-xs text-gray-400">Start: </span>
+                  <span className="font-medium text-gray-700">
+                    {formatCurrency(aedToEur(vehicle.finalBid || vehicle.startBid))}
+                  </span>
                 </div>
-
-                {/* Profit display */}
-                <div className="text-right">
-                  <div className={`text-lg font-bold ${costs.profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {costs.profit >= 0 ? '+' : ''}{formatCurrency(costs.profit)}
-                  </div>
-                  {/* Review consensus indicator */}
-                  {consensus.total > 0 && (
-                    <div className="flex items-center justify-end gap-1 mt-0.5">
-                      <span className="text-[10px] text-gray-400">{consensus.total} Reviews</span>
-                      <div className="flex items-center gap-0.5">
-                        {consensus.green > 0 && (
-                          <div className="w-2.5 h-2.5 rounded-full bg-green-500 shadow-sm"></div>
-                        )}
-                        {consensus.orange > 0 && (
-                          <div className="w-2.5 h-2.5 rounded-full bg-orange-500 shadow-sm"></div>
-                        )}
-                        {consensus.red > 0 && (
-                          <div className="w-2.5 h-2.5 rounded-full bg-red-500 shadow-sm"></div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
+              )}
+              <div>
+                <span className="text-xs text-gray-400">Max: </span>
+                <span className="font-medium text-blue-600">
+                  {formatCurrency(costs.maxBid)}
+                </span>
               </div>
             </div>
-          )}
-
-          {/* Mechanic view: Enhanced review status */}
-          {!isAdmin && (
-            <div className="flex items-center justify-between mt-2">
-              {myReview ? (
-                <div className="flex items-center gap-2 bg-green-100 px-2.5 py-1 rounded-full">
-                  <div className={`w-3 h-3 rounded-full shadow-sm ${
-                    myReview.recommendation === 'green' ? 'bg-green-500' :
-                    myReview.recommendation === 'orange' ? 'bg-orange-500' :
-                    'bg-red-500'
-                  }`}></div>
-                  <span className="text-green-700 text-xs font-medium">Bewertet</span>
+            <div className="flex items-center gap-2">
+              <span className={costs.profit >= 0 ? 'text-green-600 font-medium' : 'text-red-600 font-medium'}>
+                {formatCurrency(costs.profit)}
+              </span>
+              {consensus.total > 0 && (
+                <div className="flex items-center gap-0.5">
+                  {consensus.green > 0 && (
+                    <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                  )}
+                  {consensus.orange > 0 && (
+                    <div className="w-2 h-2 rounded-full bg-orange-500"></div>
+                  )}
+                  {consensus.red > 0 && (
+                    <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                  )}
                 </div>
-              ) : (
-                <div className="flex items-center gap-1.5 bg-orange-100 px-2.5 py-1 rounded-full animate-pulse">
-                  <span className="text-orange-600">⚡</span>
-                  <span className="text-orange-700 text-xs font-medium">Bewertung fehlt</span>
-                </div>
-              )}
-              {vehicle.mileage && (
-                <span className="text-gray-400 text-xs bg-gray-100 px-2 py-0.5 rounded-full">
-                  {formatMileage(vehicle.mileage)} km
-                </span>
               )}
             </div>
-          )}
-        </div>
+          </div>
+        )}
+
+        {/* Mechanic view */}
+        {!isAdmin && (
+          <div className="flex items-center justify-between mt-2 text-sm">
+            {myReview ? (
+              <div className="flex items-center gap-2">
+                <div className={`w-3 h-3 rounded-full ${
+                  myReview.recommendation === 'green' ? 'bg-green-500' :
+                  myReview.recommendation === 'orange' ? 'bg-orange-500' :
+                  'bg-red-500'
+                }`}></div>
+                <span className="text-gray-600 text-xs">Bewertet</span>
+              </div>
+            ) : (
+              <span className="text-orange-600 text-xs font-medium">
+                Bewertung fehlt
+              </span>
+            )}
+            {vehicle.mileage && (
+              <span className="text-gray-400 text-xs">{formatMileage(vehicle.mileage)} km</span>
+            )}
+          </div>
+        )}
       </div>
-    </div>
+    </Card>
   );
 }

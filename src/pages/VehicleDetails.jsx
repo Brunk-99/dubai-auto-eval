@@ -215,124 +215,51 @@ export default function VehicleDetails() {
 // ============ INFO TAB ============
 function InfoTab({ vehicle, isAdmin }) {
   return (
-    <div className="space-y-4">
-      {/* Status Card */}
-      <div className="rounded-2xl bg-gradient-to-br from-gray-900 to-gray-800 p-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-gray-400 text-xs uppercase tracking-wider mb-1">Status</p>
-            <Badge className={`${STATUS_COLORS[vehicle.status]} shadow-lg text-sm px-3 py-1`}>
-              {STATUS_LABELS[vehicle.status]}
-            </Badge>
+    <Card>
+      <div className="space-y-4">
+        <InfoRow label="Status">
+          <Badge className={STATUS_COLORS[vehicle.status]}>
+            {STATUS_LABELS[vehicle.status]}
+          </Badge>
+        </InfoRow>
+
+        {vehicle.year && <InfoRow label="Baujahr">{vehicle.year}</InfoRow>}
+        {vehicle.color && <InfoRow label="Farbe">{vehicle.color}</InfoRow>}
+        {vehicle.mileage && <InfoRow label="Kilometerstand">{formatMileage(vehicle.mileage)} km</InfoRow>}
+        {vehicle.vin && <InfoRow label="VIN">{vehicle.vin}</InfoRow>}
+        {vehicle.auctionLocation && <InfoRow label="Auktionsort">{vehicle.auctionLocation}</InfoRow>}
+
+        {/* Only show financial info to admin */}
+        {isAdmin && (
+          <>
+            <InfoRow label="Startgebot (AED)">{formatCurrency(vehicle.startBid, 'AED')}</InfoRow>
+            <InfoRow label="Endpreis (AED)">{formatCurrency(vehicle.finalBid, 'AED')}</InfoRow>
+            <InfoRow label="Vergleichspreis DE">{formatCurrency(vehicle.marketPriceDE)}</InfoRow>
+          </>
+        )}
+
+        {vehicle.notes && (
+          <div className="pt-2 border-t border-gray-100">
+            <p className="text-xs text-gray-500 mb-1">Notizen</p>
+            <p className="text-gray-700 whitespace-pre-wrap">{vehicle.notes}</p>
           </div>
-          {vehicle.year && (
-            <div className="text-right">
-              <p className="text-gray-400 text-xs">Baujahr</p>
-              <p className="text-white text-2xl font-bold">{vehicle.year}</p>
-            </div>
-          )}
+        )}
+
+        <div className="pt-2 border-t border-gray-100 text-xs text-gray-400">
+          {vehicle.createdBy && <p>Erstellt von: {vehicle.createdBy.name}</p>}
+          <p>Erstellt: {formatDateTime(vehicle.createdAt)}</p>
+          {vehicle.updatedBy && <p>Bearbeitet von: {vehicle.updatedBy.name}</p>}
+          <p>Aktualisiert: {formatDateTime(vehicle.updatedAt)}</p>
         </div>
       </div>
-
-      {/* Vehicle Details Card */}
-      <Card className="border-0 shadow-sm">
-        <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-          <span className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">🚗</span>
-          Fahrzeugdaten
-        </h3>
-        <div className="space-y-3">
-          {vehicle.color && (
-            <InfoRow label="Farbe" icon="🎨">
-              <span className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full bg-gray-400 border border-gray-300"></span>
-                {vehicle.color}
-              </span>
-            </InfoRow>
-          )}
-          {vehicle.mileage && (
-            <InfoRow label="Kilometerstand" icon="📊">
-              <span className="font-bold text-gray-900">{formatMileage(vehicle.mileage)} km</span>
-            </InfoRow>
-          )}
-          {vehicle.vin && (
-            <InfoRow label="VIN" icon="🔑">
-              <span className="font-mono text-xs bg-gray-100 px-2 py-1 rounded">{vehicle.vin}</span>
-            </InfoRow>
-          )}
-          {vehicle.auctionLocation && (
-            <InfoRow label="Auktionsort" icon="📍">
-              {vehicle.auctionLocation}
-            </InfoRow>
-          )}
-        </div>
-      </Card>
-
-      {/* Financial Info - Admin Only */}
-      {isAdmin && (
-        <Card className="border-0 shadow-sm bg-gradient-to-br from-green-50 to-white">
-          <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <span className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">💰</span>
-            Finanzielle Details
-          </h3>
-          <div className="space-y-3">
-            <InfoRow label="Startgebot" icon="">
-              <div className="text-right">
-                <p className="font-bold text-gray-900">{formatCurrency(vehicle.startBid, 'AED')}</p>
-              </div>
-            </InfoRow>
-            {vehicle.finalBid > 0 && (
-              <InfoRow label="Endpreis" icon="">
-                <div className="text-right">
-                  <p className="font-bold text-green-600">{formatCurrency(vehicle.finalBid, 'AED')}</p>
-                </div>
-              </InfoRow>
-            )}
-            <div className="pt-3 mt-3 border-t border-green-100">
-              <InfoRow label="Vergleichspreis DE" icon="">
-                <span className="text-lg font-bold text-blue-600">{formatCurrency(vehicle.marketPriceDE)}</span>
-              </InfoRow>
-            </div>
-          </div>
-        </Card>
-      )}
-
-      {/* Notes Card */}
-      {vehicle.notes && (
-        <Card className="border-0 shadow-sm">
-          <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-            <span className="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center">📝</span>
-            Notizen
-          </h3>
-          <p className="text-gray-700 whitespace-pre-wrap bg-gray-50 rounded-xl p-3 text-sm">
-            {vehicle.notes}
-          </p>
-        </Card>
-      )}
-
-      {/* Meta Info */}
-      <div className="rounded-xl bg-gray-50 p-4 text-xs text-gray-500 space-y-1">
-        <div className="flex items-center gap-2">
-          <span>📅</span>
-          <span>Erstellt: {formatDateTime(vehicle.createdAt)}</span>
-          {vehicle.createdBy && <span className="text-gray-400">von {vehicle.createdBy.name}</span>}
-        </div>
-        <div className="flex items-center gap-2">
-          <span>🔄</span>
-          <span>Aktualisiert: {formatDateTime(vehicle.updatedAt)}</span>
-          {vehicle.updatedBy && <span className="text-gray-400">von {vehicle.updatedBy.name}</span>}
-        </div>
-      </div>
-    </div>
+    </Card>
   );
 }
 
-function InfoRow({ label, icon, children }) {
+function InfoRow({ label, children }) {
   return (
-    <div className="flex justify-between items-center py-2 border-b border-gray-100 last:border-0">
-      <span className="text-gray-500 flex items-center gap-2">
-        {icon && <span className="text-sm">{icon}</span>}
-        {label}
-      </span>
+    <div className="flex justify-between items-center">
+      <span className="text-gray-500">{label}</span>
       <span className="text-gray-900 font-medium">{children}</span>
     </div>
   );
@@ -1350,168 +1277,130 @@ function CostsTab({ vehicle, costs, settings }) {
 
   return (
     <div className="space-y-4">
-      {/* Max Bid Hero Card */}
-      <div className="rounded-2xl bg-gradient-to-br from-blue-600 via-blue-500 to-indigo-600 p-5 text-white shadow-xl shadow-blue-500/20">
+      {/* Max Bid Highlight */}
+      <Card className="bg-blue-50 border-blue-200">
         <div className="text-center">
-          <p className="text-blue-100 text-xs uppercase tracking-wider mb-2">💎 Empfohlenes Maximalgebot</p>
-          <p className="text-4xl font-bold tracking-tight">{formatCurrency(costs.maxBidAED, 'AED')}</p>
-          <p className="text-xl text-blue-200 mt-1">≈ {formatCurrency(costs.maxBid)}</p>
+          <p className="text-sm text-blue-600 mb-1">Empfohlenes Maximalgebot</p>
+          <p className="text-3xl font-bold text-blue-700">{formatCurrency(costs.maxBidAED, 'AED')}</p>
+          <p className="text-lg text-blue-600">({formatCurrency(costs.maxBid)})</p>
         </div>
 
-        {/* Calculation breakdown - Collapsible style */}
-        <div className="mt-5 pt-4 border-t border-white/20 text-sm space-y-2">
-          <p className="text-blue-100 text-xs uppercase tracking-wider mb-3">📊 Berechnung</p>
-
-          <div className="bg-white/10 rounded-xl p-3 space-y-2">
-            <div className="flex justify-between">
-              <span className="text-blue-100">Vergleichspreis DE</span>
-              <span className="font-medium">{formatCurrency(costs.marketPrice)}</span>
-            </div>
-            <div className="flex justify-between text-red-200">
-              <span>- Zielprofit ({costs.targetProfitPct}%)</span>
-              <span>-{formatCurrency(costs.targetProfit)}</span>
-            </div>
-            <div className="flex justify-between text-red-200">
-              <span>- Sicherheitsabschlag</span>
-              <span>-{formatCurrency(costs.safetyDeduction)}</span>
-            </div>
-            <div className="flex justify-between text-red-200">
-              <span>- Transport</span>
-              <span>-{formatCurrency(costs.transportCost)}</span>
-            </div>
-            <div className="flex justify-between text-red-200">
-              <span>- TÜV/Zulassung</span>
-              <span>-{formatCurrency(costs.tuvCost)}</span>
-            </div>
-            <div className="flex justify-between text-red-200">
-              <span>- Sonstiges</span>
-              <span>-{formatCurrency(costs.miscCost)}</span>
-            </div>
-            <div className="flex justify-between text-red-200">
-              <span>- Reparatur (gepuffert)</span>
-              <span>-{formatCurrency(costs.repairBuffered)}</span>
-            </div>
+        {/* Calculation breakdown */}
+        <div className="mt-4 pt-4 border-t border-blue-200 text-xs text-blue-700 space-y-1">
+          <p className="font-semibold mb-2">Berechnung:</p>
+          <div className="flex justify-between">
+            <span>Vergleichspreis DE</span>
+            <span>{formatCurrency(costs.marketPrice)}</span>
           </div>
-
-          <div className="bg-white/20 rounded-xl p-3 mt-2">
-            <div className="flex justify-between font-semibold">
-              <span>Verfügbar inkl. Zoll/MwSt</span>
-              <span>{formatCurrency(costs.marketPrice - costs.targetProfit - costs.safetyDeduction - costs.otherCosts)}</span>
-            </div>
-            <div className="flex justify-between text-blue-200 text-sm mt-1">
-              <span>÷ 1,309 (Zoll + MwSt)</span>
-              <span className="font-bold text-white">= {formatCurrency(costs.maxBid)}</span>
-            </div>
+          <div className="flex justify-between">
+            <span>- Zielprofit ({costs.targetProfitPct}%)</span>
+            <span>-{formatCurrency(costs.targetProfit)}</span>
+          </div>
+          <div className="flex justify-between">
+            <span>- Sicherheitsabschlag</span>
+            <span>-{formatCurrency(costs.safetyDeduction)}</span>
+          </div>
+          <div className="flex justify-between">
+            <span>- Transport</span>
+            <span>-{formatCurrency(costs.transportCost)}</span>
+          </div>
+          <div className="flex justify-between">
+            <span>- TÜV/Zulassung</span>
+            <span>-{formatCurrency(costs.tuvCost)}</span>
+          </div>
+          <div className="flex justify-between">
+            <span>- Sonstiges</span>
+            <span>-{formatCurrency(costs.miscCost)}</span>
+          </div>
+          <div className="flex justify-between">
+            <span>- Reparatur (gepuffert)</span>
+            <span>-{formatCurrency(costs.repairBuffered)}</span>
+          </div>
+          <div className="flex justify-between pt-2 border-t border-blue-200 font-semibold">
+            <span>Verfügbar für Kauf inkl. Zoll/MwSt</span>
+            <span>{formatCurrency(costs.marketPrice - costs.targetProfit - costs.safetyDeduction - costs.otherCosts)}</span>
+          </div>
+          <div className="flex justify-between">
+            <span>÷ 1,309 (Zoll 10% + MwSt 19%)</span>
+            <span>= {formatCurrency(costs.maxBid)}</span>
           </div>
         </div>
-      </div>
+      </Card>
 
-      {/* Cost Breakdown Card */}
-      <Card className="border-0 shadow-sm">
-        <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-          <span className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">📋</span>
-          Kostenaufstellung
-        </h3>
-        <div className="space-y-2">
-          <CostRow label={`Kaufpreis`} sublabel={formatCurrency(costs.bidPriceAED, 'AED')} value={costs.bidPrice} />
-          <CostRow label="Zoll" sublabel="10%" value={costs.duty10} />
-          <CostRow label="MwSt" sublabel="19%" value={costs.vat19} />
-          <CostRow label="Transport" icon="🚢" value={costs.transportCost} />
-          <CostRow label="TÜV/Zulassung" icon="📄" value={costs.tuvCost} />
-          <CostRow label="Sonstiges" icon="📦" value={costs.miscCost} />
+      <Card>
+        <h3 className="font-semibold text-gray-900 mb-4">Kostenaufstellung (aktuelles Gebot)</h3>
+        <div className="space-y-3">
+          <CostRow label={`Kaufpreis (${formatCurrency(costs.bidPriceAED, 'AED')})`} value={costs.bidPrice} />
+          <CostRow label="Zoll (10%)" value={costs.duty10} />
+          <CostRow label="MwSt (19%)" value={costs.vat19} />
+          <CostRow label="Transport" value={costs.transportCost} />
+          <CostRow label="TÜV/Zulassung" value={costs.tuvCost} />
+          <CostRow label="Sonstiges" value={costs.miscCost} />
           <CostRow
-            label="Reparatur"
-            sublabel={`+${vehicle.costInputs?.repairBufferPct || 0}% Puffer`}
+            label={`Reparatur (+${vehicle.costInputs?.repairBufferPct || 0}% Puffer)`}
             value={costs.repairBuffered}
-            badge={
+            sublabel={
               costs.repairEstimateSource === 'mechanic'
                 ? `Ø ${costs.repairEstimateCount} Mechaniker`
                 : costs.repairEstimateSource === 'ai'
-                  ? '🤖 KI'
+                  ? 'KI-Schätzung'
                   : null
             }
-            icon="🔧"
           />
 
-          <div className="pt-4 mt-4 border-t-2 border-gray-200">
-            <div className="flex justify-between items-center bg-gray-900 text-white rounded-xl p-4">
-              <span className="font-semibold">GESAMTKOSTEN</span>
-              <span className="text-2xl font-bold">{formatCurrency(costs.totalCost)}</span>
+          <div className="pt-3 mt-3 border-t-2 border-gray-200">
+            <CostRow label="GESAMTKOSTEN" value={costs.totalCost} bold />
+          </div>
+        </div>
+      </Card>
+
+      <Card>
+        <h3 className="font-semibold text-gray-900 mb-4">Ergebnis</h3>
+        <div className="space-y-3">
+          <CostRow label="Vergleichspreis DE" value={costs.marketPrice} />
+
+          <div className="pt-3 mt-3 border-t-2 border-gray-200 space-y-3">
+            <div className="flex justify-between items-center">
+              <span className="font-semibold text-gray-900">Profit</span>
+              <span className={`text-xl font-bold ${costs.profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                {formatCurrency(costs.profit)}
+              </span>
+            </div>
+
+            <div className="flex justify-between items-center">
+              <span className="text-gray-600">ROI</span>
+              <span className={`font-medium ${costs.roiPct >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                {formatPercent(costs.roiPct)}
+              </span>
+            </div>
+
+            <div className="flex justify-between items-center pt-3 border-t border-gray-100">
+              <span className="text-gray-600">Bewertung</span>
+              <Ampel status={ampel} size="lg" showLabel />
             </div>
           </div>
         </div>
       </Card>
 
-      {/* Result Card */}
-      <div className={`rounded-2xl p-5 ${
-        costs.profit >= 0
-          ? 'bg-gradient-to-br from-green-500 to-emerald-600'
-          : 'bg-gradient-to-br from-red-500 to-rose-600'
-      } text-white shadow-xl ${costs.profit >= 0 ? 'shadow-green-500/20' : 'shadow-red-500/20'}`}>
-        <h3 className="font-semibold mb-4 flex items-center gap-2 text-white/80">
-          <span className="text-xl">{costs.profit >= 0 ? '🎉' : '⚠️'}</span>
-          Ergebnis
-        </h3>
-
-        <div className="space-y-3">
-          <div className="flex justify-between items-center bg-white/10 rounded-xl p-3">
-            <span className="text-white/80">Vergleichspreis DE</span>
-            <span className="font-semibold text-lg">{formatCurrency(costs.marketPrice)}</span>
-          </div>
-
-          <div className="bg-white/20 rounded-xl p-4">
-            <div className="flex justify-between items-center">
-              <span className="font-semibold">Profit</span>
-              <span className="text-3xl font-bold">
-                {costs.profit >= 0 ? '+' : ''}{formatCurrency(costs.profit)}
-              </span>
-            </div>
-
-            <div className="flex justify-between items-center mt-3 pt-3 border-t border-white/20">
-              <span className="text-white/80">ROI</span>
-              <span className="font-bold text-xl">
-                {formatPercent(costs.roiPct)}
-              </span>
-            </div>
-          </div>
-
-          <div className="flex justify-between items-center bg-white/10 rounded-xl p-3">
-            <span className="text-white/80">Bewertung</span>
-            <Ampel status={ampel} size="lg" showLabel />
-          </div>
-        </div>
-      </div>
-
-      {/* Export Button */}
-      <button
-        onClick={handleExport}
-        className="w-full bg-gray-900 hover:bg-gray-800 active:bg-gray-700 text-white font-medium py-4 px-6 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 shadow-lg"
-      >
-        <span>📤</span>
-        <span>Kalkulation teilen / exportieren</span>
-      </button>
+      <Button fullWidth variant="secondary" onClick={handleExport}>
+        Kalkulation teilen / exportieren
+      </Button>
     </div>
   );
 }
 
-function CostRow({ label, value, sublabel, bold, icon, badge }) {
+function CostRow({ label, value, sublabel, bold }) {
   return (
-    <div className="flex justify-between items-center py-2.5 border-b border-gray-100 last:border-0">
-      <div className="flex items-center gap-2">
-        {icon && <span className="text-sm">{icon}</span>}
-        <div>
-          <span className={bold ? 'font-semibold text-gray-900' : 'text-gray-700'}>
-            {label}
-          </span>
-          {sublabel && (
-            <span className="text-xs text-gray-400 ml-2">{sublabel}</span>
-          )}
-          {badge && (
-            <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full ml-2">{badge}</span>
-          )}
-        </div>
+    <div className="flex justify-between items-center">
+      <div>
+        <span className={bold ? 'font-semibold text-gray-900' : 'text-gray-600'}>
+          {label}
+        </span>
+        {sublabel && (
+          <p className="text-xs text-gray-400">{sublabel}</p>
+        )}
       </div>
-      <span className={bold ? 'font-bold text-lg text-gray-900' : 'font-medium text-gray-900'}>
+      <span className={bold ? 'font-semibold text-gray-900' : 'text-gray-900'}>
         {formatCurrency(value)}
       </span>
     </div>
