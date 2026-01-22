@@ -215,51 +215,124 @@ export default function VehicleDetails() {
 // ============ INFO TAB ============
 function InfoTab({ vehicle, isAdmin }) {
   return (
-    <Card>
-      <div className="space-y-4">
-        <InfoRow label="Status">
-          <Badge className={STATUS_COLORS[vehicle.status]}>
-            {STATUS_LABELS[vehicle.status]}
-          </Badge>
-        </InfoRow>
-
-        {vehicle.year && <InfoRow label="Baujahr">{vehicle.year}</InfoRow>}
-        {vehicle.color && <InfoRow label="Farbe">{vehicle.color}</InfoRow>}
-        {vehicle.mileage && <InfoRow label="Kilometerstand">{formatMileage(vehicle.mileage)} km</InfoRow>}
-        {vehicle.vin && <InfoRow label="VIN">{vehicle.vin}</InfoRow>}
-        {vehicle.auctionLocation && <InfoRow label="Auktionsort">{vehicle.auctionLocation}</InfoRow>}
-
-        {/* Only show financial info to admin */}
-        {isAdmin && (
-          <>
-            <InfoRow label="Startgebot (AED)">{formatCurrency(vehicle.startBid, 'AED')}</InfoRow>
-            <InfoRow label="Endpreis (AED)">{formatCurrency(vehicle.finalBid, 'AED')}</InfoRow>
-            <InfoRow label="Vergleichspreis DE">{formatCurrency(vehicle.marketPriceDE)}</InfoRow>
-          </>
-        )}
-
-        {vehicle.notes && (
-          <div className="pt-2 border-t border-gray-100">
-            <p className="text-xs text-gray-500 mb-1">Notizen</p>
-            <p className="text-gray-700 whitespace-pre-wrap">{vehicle.notes}</p>
+    <div className="space-y-4">
+      {/* Status Card */}
+      <div className="rounded-2xl bg-gradient-to-br from-gray-900 to-gray-800 p-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-gray-400 text-xs uppercase tracking-wider mb-1">Status</p>
+            <Badge className={`${STATUS_COLORS[vehicle.status]} shadow-lg text-sm px-3 py-1`}>
+              {STATUS_LABELS[vehicle.status]}
+            </Badge>
           </div>
-        )}
-
-        <div className="pt-2 border-t border-gray-100 text-xs text-gray-400">
-          {vehicle.createdBy && <p>Erstellt von: {vehicle.createdBy.name}</p>}
-          <p>Erstellt: {formatDateTime(vehicle.createdAt)}</p>
-          {vehicle.updatedBy && <p>Bearbeitet von: {vehicle.updatedBy.name}</p>}
-          <p>Aktualisiert: {formatDateTime(vehicle.updatedAt)}</p>
+          {vehicle.year && (
+            <div className="text-right">
+              <p className="text-gray-400 text-xs">Baujahr</p>
+              <p className="text-white text-2xl font-bold">{vehicle.year}</p>
+            </div>
+          )}
         </div>
       </div>
-    </Card>
+
+      {/* Vehicle Details Card */}
+      <Card className="border-0 shadow-sm">
+        <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+          <span className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">🚗</span>
+          Fahrzeugdaten
+        </h3>
+        <div className="space-y-3">
+          {vehicle.color && (
+            <InfoRow label="Farbe" icon="🎨">
+              <span className="flex items-center gap-2">
+                <span className="w-3 h-3 rounded-full bg-gray-400 border border-gray-300"></span>
+                {vehicle.color}
+              </span>
+            </InfoRow>
+          )}
+          {vehicle.mileage && (
+            <InfoRow label="Kilometerstand" icon="📊">
+              <span className="font-bold text-gray-900">{formatMileage(vehicle.mileage)} km</span>
+            </InfoRow>
+          )}
+          {vehicle.vin && (
+            <InfoRow label="VIN" icon="🔑">
+              <span className="font-mono text-xs bg-gray-100 px-2 py-1 rounded">{vehicle.vin}</span>
+            </InfoRow>
+          )}
+          {vehicle.auctionLocation && (
+            <InfoRow label="Auktionsort" icon="📍">
+              {vehicle.auctionLocation}
+            </InfoRow>
+          )}
+        </div>
+      </Card>
+
+      {/* Financial Info - Admin Only */}
+      {isAdmin && (
+        <Card className="border-0 shadow-sm bg-gradient-to-br from-green-50 to-white">
+          <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <span className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">💰</span>
+            Finanzielle Details
+          </h3>
+          <div className="space-y-3">
+            <InfoRow label="Startgebot" icon="">
+              <div className="text-right">
+                <p className="font-bold text-gray-900">{formatCurrency(vehicle.startBid, 'AED')}</p>
+              </div>
+            </InfoRow>
+            {vehicle.finalBid > 0 && (
+              <InfoRow label="Endpreis" icon="">
+                <div className="text-right">
+                  <p className="font-bold text-green-600">{formatCurrency(vehicle.finalBid, 'AED')}</p>
+                </div>
+              </InfoRow>
+            )}
+            <div className="pt-3 mt-3 border-t border-green-100">
+              <InfoRow label="Vergleichspreis DE" icon="">
+                <span className="text-lg font-bold text-blue-600">{formatCurrency(vehicle.marketPriceDE)}</span>
+              </InfoRow>
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {/* Notes Card */}
+      {vehicle.notes && (
+        <Card className="border-0 shadow-sm">
+          <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+            <span className="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center">📝</span>
+            Notizen
+          </h3>
+          <p className="text-gray-700 whitespace-pre-wrap bg-gray-50 rounded-xl p-3 text-sm">
+            {vehicle.notes}
+          </p>
+        </Card>
+      )}
+
+      {/* Meta Info */}
+      <div className="rounded-xl bg-gray-50 p-4 text-xs text-gray-500 space-y-1">
+        <div className="flex items-center gap-2">
+          <span>📅</span>
+          <span>Erstellt: {formatDateTime(vehicle.createdAt)}</span>
+          {vehicle.createdBy && <span className="text-gray-400">von {vehicle.createdBy.name}</span>}
+        </div>
+        <div className="flex items-center gap-2">
+          <span>🔄</span>
+          <span>Aktualisiert: {formatDateTime(vehicle.updatedAt)}</span>
+          {vehicle.updatedBy && <span className="text-gray-400">von {vehicle.updatedBy.name}</span>}
+        </div>
+      </div>
+    </div>
   );
 }
 
-function InfoRow({ label, children }) {
+function InfoRow({ label, icon, children }) {
   return (
-    <div className="flex justify-between items-center">
-      <span className="text-gray-500">{label}</span>
+    <div className="flex justify-between items-center py-2 border-b border-gray-100 last:border-0">
+      <span className="text-gray-500 flex items-center gap-2">
+        {icon && <span className="text-sm">{icon}</span>}
+        {label}
+      </span>
       <span className="text-gray-900 font-medium">{children}</span>
     </div>
   );
@@ -561,301 +634,284 @@ function DamageTab({ vehicle, onUpdate, costs, isAdmin }) {
 
       {report ? (
         <div className="space-y-4">
-          {/* Main Stats Card */}
-          <Card>
-            <div className="space-y-4">
-              {/* Legacy Severity Score (kept for backward compatibility) */}
-              <div className="flex items-center justify-between">
-                <span className="text-gray-500">Schweregrad (gesamt)</span>
-                <div className="flex items-center gap-2">
-                  {report.severityScore !== undefined && (
-                    <span className="text-sm text-gray-400">{report.severityScore}%</span>
-                  )}
-                  <span className={`font-bold ${SEVERITY_COLORS[report.severity]}`}>
-                    {SEVERITY_LABELS[report.severity]}
+          {/* Hero Card - Schweregrad & Kosten */}
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-gray-900 to-gray-800 text-white p-5">
+            {/* Background Pattern */}
+            <div className="absolute inset-0 opacity-5">
+              <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+                <pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse">
+                  <path d="M 10 0 L 0 0 0 10" fill="none" stroke="white" strokeWidth="0.5"/>
+                </pattern>
+                <rect width="100" height="100" fill="url(#grid)"/>
+              </svg>
+            </div>
+
+            <div className="relative">
+              {/* Schweregrad Anzeige */}
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <p className="text-gray-400 text-xs uppercase tracking-wider mb-1">Technischer Schweregrad</p>
+                  <div className="flex items-center gap-3">
+                    <span className="text-4xl font-bold">{report.schweregrad || Math.round(report.severityScore / 10)}</span>
+                    <span className="text-gray-400 text-lg">/10</span>
+                  </div>
+                </div>
+                <div className={`w-16 h-16 rounded-2xl flex items-center justify-center ${
+                  report.schweregrad >= 7 ? 'bg-red-500/20' :
+                  report.schweregrad >= 4 ? 'bg-orange-500/20' :
+                  'bg-green-500/20'
+                }`}>
+                  <span className="text-3xl">
+                    {report.schweregrad >= 7 ? '🔴' : report.schweregrad >= 4 ? '🟠' : '🟢'}
                   </span>
                 </div>
               </div>
 
-              {/* NEW: Technical Severity */}
-              {report.severityBreakdown?.technical && (
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-500">Technischer Schweregrad</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-400">{report.severityBreakdown.technical.percent}%</span>
-                    <span className={`font-bold ${
-                      report.severityBreakdown.technical.label === 'SCHWER' ? 'text-red-600' :
-                      report.severityBreakdown.technical.label === 'MITTEL' ? 'text-orange-600' :
-                      'text-green-600'
-                    }`}>
-                      {report.severityBreakdown.technical.label === 'SCHWER' ? 'Schwer' :
-                       report.severityBreakdown.technical.label === 'MITTEL' ? 'Mittel' : 'Leicht'}
-                    </span>
-                  </div>
+              {/* Schweregrad Balken */}
+              <div className="mb-4">
+                <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all duration-500 ${
+                      report.schweregrad >= 7 ? 'bg-gradient-to-r from-red-500 to-red-400' :
+                      report.schweregrad >= 4 ? 'bg-gradient-to-r from-orange-500 to-yellow-400' :
+                      'bg-gradient-to-r from-green-500 to-green-400'
+                    }`}
+                    style={{ width: `${(report.schweregrad || report.severityScore / 10) * 10}%` }}
+                  />
                 </div>
-              )}
-
-              {/* NEW: Economic Severity (Dubai) */}
-              {report.severityBreakdown?.economic && (
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1">
-                    <span className="text-gray-500">Wirtschaftlicher Schweregrad</span>
-                    <span className="text-xs text-gray-400">(Dubai)</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-400">{report.severityBreakdown.economic.percent}%</span>
-                    <span className={`font-bold ${
-                      report.severityBreakdown.economic.label === 'SCHWER' ? 'text-red-600' :
-                      report.severityBreakdown.economic.label === 'MITTEL' ? 'text-orange-600' :
-                      'text-green-600'
-                    }`}>
-                      {report.severityBreakdown.economic.label === 'SCHWER' ? 'Hoch' :
-                       report.severityBreakdown.economic.label === 'MITTEL' ? 'Moderat' : 'Günstig'}
-                    </span>
-                  </div>
+                <div className="flex justify-between text-xs text-gray-500 mt-1">
+                  <span>Kosmetisch</span>
+                  <span>Mittel</span>
+                  <span>Schwer</span>
                 </div>
-              )}
+              </div>
 
-              {/* NEW: Summary Badge */}
-              {report.severityBreakdown?.summaryBadge && (
-                <div className="pt-2 border-t border-gray-100">
-                  <p className="text-sm text-blue-700 bg-blue-50 rounded-lg px-3 py-2 text-center">
-                    {report.severityBreakdown.summaryBadge}
+              {/* Fahrbereit Status */}
+              <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium ${
+                report.fahrbereit === 'YES' ? 'bg-green-500/20 text-green-300' :
+                report.fahrbereit === 'NO' ? 'bg-red-500/20 text-red-300' :
+                'bg-yellow-500/20 text-yellow-300'
+              }`}>
+                <span>{report.fahrbereit === 'YES' ? '✓' : report.fahrbereit === 'NO' ? '✕' : '?'}</span>
+                <span>
+                  {report.fahrbereit === 'YES' ? 'Fahrbereit' :
+                   report.fahrbereit === 'NO' ? 'Nicht fahrbereit' : 'Prüfung erforderlich'}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Kosten-Übersicht Card */}
+          {report.kostenAed?.gesamtRange && (
+            <div className="rounded-2xl bg-gradient-to-br from-blue-600 to-blue-700 text-white p-5">
+              <div className="flex items-start justify-between mb-4">
+                <div>
+                  <p className="text-blue-200 text-xs uppercase tracking-wider mb-1">💰 Geschätzte Reparaturkosten</p>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-3xl font-bold">
+                      {report.kostenEur?.gesamtRange?.mid?.toLocaleString('de-DE') || Math.round(report.kostenAed.gesamtRange.mid / 4.29).toLocaleString('de-DE')}
+                    </span>
+                    <span className="text-blue-200 text-lg">€</span>
+                  </div>
+                  <p className="text-blue-300 text-sm mt-1">
+                    {report.kostenEur?.gesamtRange?.low?.toLocaleString('de-DE') || Math.round(report.kostenAed.gesamtRange.low / 4.29).toLocaleString('de-DE')} – {report.kostenEur?.gesamtRange?.high?.toLocaleString('de-DE') || Math.round(report.kostenAed.gesamtRange.high / 4.29).toLocaleString('de-DE')} €
                   </p>
                 </div>
-              )}
-
-              {/* Frame Risk */}
-              {report.frameRisk && (
-                <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-                  <span className="text-gray-500">Rahmenrisiko</span>
-                  <span className={`font-bold ${
-                    report.frameRisk === 'hoch' ? 'text-red-600' :
-                    report.frameRisk === 'mittel' ? 'text-orange-600' :
-                    'text-green-600'
-                  }`}>
-                    {report.frameRisk.charAt(0).toUpperCase() + report.frameRisk.slice(1)}
-                  </span>
+                <div className="text-right">
+                  <p className="text-blue-300 text-xs">In AED</p>
+                  <p className="text-lg font-semibold">{report.kostenAed.gesamtRange.mid?.toLocaleString('de-DE')}</p>
+                  <p className="text-blue-300 text-xs">Kurs: {report.kostenEur?.kurs || 4.29}</p>
                 </div>
-              )}
+              </div>
 
-              {/* Repair Hours */}
-              {report.totalRepairHours > 0 && (
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-500">Geschätzte Arbeitsstunden</span>
-                  <span className="font-bold text-gray-900">
-                    {report.totalRepairHours}h
-                  </span>
+              {/* Kosten-Aufschlüsselung */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-white/10 rounded-xl p-3">
+                  <p className="text-blue-200 text-xs mb-1">🔩 Teile</p>
+                  <p className="font-semibold">{report.kostenAed.teileRange?.mid?.toLocaleString('de-DE') || '–'} AED</p>
                 </div>
-              )}
-
-              {/* Repair Cost */}
-              {report.estimatedRepairCost > 0 && (
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-500">KI-Reparaturschätzung</span>
-                  <span className="font-bold text-gray-900">
-                    {formatCurrency(report.estimatedRepairCost)}
-                  </span>
+                <div className="bg-white/10 rounded-xl p-3">
+                  <p className="text-blue-200 text-xs mb-1">🔧 Arbeit</p>
+                  <p className="font-semibold">{report.kostenAed.arbeitRange?.mid?.toLocaleString('de-DE') || '–'} AED</p>
                 </div>
-              )}
+              </div>
 
-              {/* Confidence */}
-              {report.rawJson?.confidence && (
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-500">Konfidenz</span>
-                  <span className="text-gray-600">{report.rawJson.confidence}%</span>
+              {/* Annahmen */}
+              {report.kostenAed.annahmen?.length > 0 && (
+                <div className="mt-3 pt-3 border-t border-white/10">
+                  <p className="text-blue-200 text-xs mb-1">Annahmen:</p>
+                  <div className="flex flex-wrap gap-1">
+                    {report.kostenAed.annahmen.map((a, i) => (
+                      <span key={i} className="text-xs bg-white/10 px-2 py-0.5 rounded-full">{a}</span>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
-          </Card>
-
-          {/* NEW: Technical Severity Reasons (expandable) */}
-          {report.severityBreakdown?.technical?.reasons?.length > 0 && (
-            <Card className="bg-gray-50">
-              <p className="text-xs text-gray-500 mb-2">Technische Bewertung basiert auf:</p>
-              <ul className="text-sm text-gray-700 space-y-1">
-                {report.severityBreakdown.technical.reasons.map((reason, i) => (
-                  <li key={i} className="flex items-start gap-2">
-                    <span className="text-gray-400">•</span>
-                    <span>{reason}</span>
-                  </li>
-                ))}
-              </ul>
-            </Card>
           )}
 
-          {/* NEW: Economic Severity Reasons (expandable) */}
-          {report.severityBreakdown?.economic?.reasons?.length > 0 && (
-            <Card className="bg-green-50 border-green-100">
-              <p className="text-xs text-green-600 mb-2">Wirtschaftliche Bewertung (Dubai-Markt):</p>
-              <ul className="text-sm text-green-800 space-y-1">
-                {report.severityBreakdown.economic.reasons.map((reason, i) => (
-                  <li key={i} className="flex items-start gap-2">
-                    <span className="text-green-400">•</span>
-                    <span>{reason}</span>
-                  </li>
-                ))}
-              </ul>
-            </Card>
-          )}
+          {/* Bauteil & Analyse */}
+          <Card className="border-0 shadow-sm">
+            <div className="flex items-start gap-3 mb-3">
+              <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center text-lg">📋</div>
+              <div className="flex-1">
+                <p className="text-xs text-gray-400 uppercase tracking-wider">Hauptschaden</p>
+                <p className="font-semibold text-gray-900">{report.bauteil}</p>
+              </div>
+            </div>
+            <p className="text-gray-600 text-sm leading-relaxed">{report.schadenAnalyse || report.summary}</p>
 
-          {/* Summary */}
-          <Card>
-            <p className="text-xs text-gray-500 mb-2">Zusammenfassung</p>
-            <p className="text-gray-800">{report.summary}</p>
-
-            {report.frameRiskReason && (
+            {/* Reparaturweg */}
+            {report.reparaturWeg && (
               <div className="mt-3 pt-3 border-t border-gray-100">
-                <p className="text-xs text-gray-500 mb-1">Rahmenrisiko-Begründung</p>
-                <p className="text-sm text-gray-700">{report.frameRiskReason}</p>
+                <p className="text-xs text-gray-400 mb-2">Empfohlener Reparaturweg</p>
+                <div className="flex flex-wrap gap-2">
+                  {(Array.isArray(report.reparaturWeg) ? report.reparaturWeg : [report.reparaturWeg]).map((weg, i) => (
+                    <span key={i} className="text-xs px-3 py-1 rounded-full bg-blue-50 text-blue-700 font-medium">
+                      {weg}
+                    </span>
+                  ))}
+                </div>
               </div>
             )}
           </Card>
 
+          {/* Legacy Stats (für alte Reports ohne neue Felder) */}
+          {!report.kostenAed?.gesamtRange && report.estimatedRepairCost > 0 && (
+            <Card>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-500">KI-Reparaturschätzung</span>
+                <span className="font-bold text-gray-900">
+                  {formatCurrency(report.estimatedRepairCost)}
+                </span>
+              </div>
+            </Card>
+          )}
+
           {/* V2: Teileliste - Muss ersetzt werden */}
           {report.teileliste?.mussErsetztWerden?.length > 0 && (
-            <Card className="border-red-200 bg-red-50">
-              <div className="flex items-center gap-2 mb-3">
-                <span className="text-red-600 text-lg">⚠️</span>
-                <p className="text-sm font-semibold text-red-800">Muss ersetzt werden ({report.teileliste.mussErsetztWerden.length} Teile)</p>
+            <div className="rounded-2xl overflow-hidden">
+              {/* Header */}
+              <div className="bg-gradient-to-r from-red-600 to-red-500 px-4 py-3 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-white text-lg">⚠️</span>
+                  <span className="text-white font-semibold">Muss ersetzt werden</span>
+                </div>
+                <span className="bg-white/20 text-white text-xs px-2 py-1 rounded-full font-medium">
+                  {report.teileliste.mussErsetztWerden.length} {report.teileliste.mussErsetztWerden.length === 1 ? 'Teil' : 'Teile'}
+                </span>
               </div>
-              <div className="space-y-3">
+              {/* Items */}
+              <div className="bg-red-50 divide-y divide-red-100">
                 {report.teileliste.mussErsetztWerden.map((teil, i) => (
-                  <div key={i} className="bg-white rounded-lg p-3 border border-red-100">
-                    <div className="flex items-start justify-between mb-1">
-                      <p className="font-medium text-gray-900">{teil.teilBezeichnung}</p>
-                      <span className={`text-xs px-2 py-0.5 rounded-full ${
+                  <div key={i} className="p-4 hover:bg-red-100/50 transition-colors">
+                    <div className="flex items-start justify-between gap-3 mb-2">
+                      <div className="flex items-start gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <span className="text-red-600 text-sm font-bold">{i + 1}</span>
+                        </div>
+                        <div>
+                          <p className="font-semibold text-gray-900">{teil.teilBezeichnung}</p>
+                          <p className="text-sm text-red-600 mt-0.5">{teil.grund}</p>
+                        </div>
+                      </div>
+                      <div className={`flex-shrink-0 text-xs px-2.5 py-1 rounded-full font-medium ${
                         teil.confidence >= 0.8 ? 'bg-green-100 text-green-700' :
                         teil.confidence >= 0.5 ? 'bg-yellow-100 text-yellow-700' :
-                        'bg-gray-100 text-gray-600'
+                        'bg-gray-100 text-gray-500'
                       }`}>
                         {Math.round(teil.confidence * 100)}%
-                      </span>
+                      </div>
                     </div>
-                    <p className="text-sm text-red-700 mb-1">
-                      <span className="font-medium">Grund:</span> {teil.grund}
-                    </p>
                     {teil.evidence && (
-                      <p className="text-xs text-gray-500 italic">"{teil.evidence}"</p>
+                      <p className="text-xs text-gray-500 italic ml-11 bg-white/50 rounded px-2 py-1">
+                        💬 "{teil.evidence}"
+                      </p>
                     )}
                   </div>
                 ))}
               </div>
-            </Card>
+            </div>
           )}
 
           {/* V2: Teileliste - Prüfen */}
           {report.teileliste?.vermutlichDefektPruefen?.length > 0 && (
-            <Card className="border-orange-200 bg-orange-50">
-              <div className="flex items-center gap-2 mb-3">
-                <span className="text-orange-600 text-lg">🔍</span>
-                <p className="text-sm font-semibold text-orange-800">Prüfen ({report.teileliste.vermutlichDefektPruefen.length} Teile)</p>
+            <div className="rounded-2xl overflow-hidden">
+              {/* Header */}
+              <div className="bg-gradient-to-r from-orange-500 to-amber-500 px-4 py-3 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-white text-lg">🔍</span>
+                  <span className="text-white font-semibold">Zu prüfen</span>
+                </div>
+                <span className="bg-white/20 text-white text-xs px-2 py-1 rounded-full font-medium">
+                  {report.teileliste.vermutlichDefektPruefen.length} {report.teileliste.vermutlichDefektPruefen.length === 1 ? 'Teil' : 'Teile'}
+                </span>
               </div>
-              <div className="space-y-3">
+              {/* Items */}
+              <div className="bg-orange-50 divide-y divide-orange-100">
                 {report.teileliste.vermutlichDefektPruefen.map((teil, i) => (
-                  <div key={i} className="bg-white rounded-lg p-3 border border-orange-100">
-                    <div className="flex items-start justify-between mb-1">
-                      <p className="font-medium text-gray-900">{teil.teilBezeichnung}</p>
-                      <span className={`text-xs px-2 py-0.5 rounded-full ${
+                  <div key={i} className="p-4 hover:bg-orange-100/50 transition-colors">
+                    <div className="flex items-start justify-between gap-3 mb-2">
+                      <div className="flex items-start gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-orange-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <span className="text-orange-600 text-sm font-bold">{i + 1}</span>
+                        </div>
+                        <div>
+                          <p className="font-semibold text-gray-900">{teil.teilBezeichnung}</p>
+                          <p className="text-sm text-orange-600 mt-0.5">{teil.verdacht}</p>
+                        </div>
+                      </div>
+                      <div className={`flex-shrink-0 text-xs px-2.5 py-1 rounded-full font-medium ${
                         teil.confidence >= 0.8 ? 'bg-green-100 text-green-700' :
                         teil.confidence >= 0.5 ? 'bg-yellow-100 text-yellow-700' :
-                        'bg-gray-100 text-gray-600'
+                        'bg-gray-100 text-gray-500'
                       }`}>
                         {Math.round(teil.confidence * 100)}%
-                      </span>
+                      </div>
                     </div>
-                    <p className="text-sm text-orange-700 mb-1">
-                      <span className="font-medium">Verdacht:</span> {teil.verdacht}
-                    </p>
-                    <p className="text-xs text-gray-600">
-                      <span className="font-medium">Prüfung:</span> {teil.pruefung}
-                    </p>
+                    <div className="ml-11 flex items-center gap-2 text-xs text-gray-600 bg-white/50 rounded px-2 py-1.5">
+                      <span>🔧</span>
+                      <span>{teil.pruefung}</span>
+                    </div>
                   </div>
                 ))}
               </div>
-            </Card>
-          )}
-
-          {/* V2: Kostenübersicht mit Ranges */}
-          {report.kostenAed?.gesamtRange && (
-            <Card>
-              <p className="text-xs text-gray-500 mb-3">Kostenübersicht (Dubai-Markt)</p>
-              <div className="space-y-3">
-                {/* Gesamt Range */}
-                <div className="bg-blue-50 rounded-lg p-3">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-gray-700">Gesamtkosten</span>
-                    <span className="font-bold text-blue-700">
-                      {report.kostenAed.gesamtRange.low.toLocaleString('de-DE')} - {report.kostenAed.gesamtRange.high.toLocaleString('de-DE')} AED
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-500">Realistisch (mid)</span>
-                    <span className="font-medium text-gray-700">{report.kostenAed.gesamtRange.mid.toLocaleString('de-DE')} AED</span>
-                  </div>
-                  {report.kostenEur?.gesamtRange && (
-                    <div className="flex items-center justify-between text-sm mt-1 pt-1 border-t border-blue-100">
-                      <span className="text-gray-500">In Euro (Kurs {report.kostenEur.kurs})</span>
-                      <span className="font-medium text-gray-700">
-                        {report.kostenEur.gesamtRange.low.toLocaleString('de-DE')} - {report.kostenEur.gesamtRange.high.toLocaleString('de-DE')} €
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Teile + Arbeit Breakdown */}
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="bg-gray-50 rounded-lg p-2">
-                    <p className="text-xs text-gray-500 mb-1">Teile</p>
-                    <p className="text-sm font-medium text-gray-800">
-                      {report.kostenAed.teileRange?.mid?.toLocaleString('de-DE') || '–'} AED
-                    </p>
-                    <p className="text-xs text-gray-400">
-                      {report.kostenAed.teileRange?.low?.toLocaleString('de-DE')} - {report.kostenAed.teileRange?.high?.toLocaleString('de-DE')}
-                    </p>
-                  </div>
-                  <div className="bg-gray-50 rounded-lg p-2">
-                    <p className="text-xs text-gray-500 mb-1">Arbeit</p>
-                    <p className="text-sm font-medium text-gray-800">
-                      {report.kostenAed.arbeitRange?.mid?.toLocaleString('de-DE') || '–'} AED
-                    </p>
-                    <p className="text-xs text-gray-400">
-                      {report.kostenAed.arbeitRange?.low?.toLocaleString('de-DE')} - {report.kostenAed.arbeitRange?.high?.toLocaleString('de-DE')}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Annahmen */}
-                {report.kostenAed.annahmen?.length > 0 && (
-                  <div className="text-xs text-gray-500">
-                    <p className="font-medium mb-1">Annahmen:</p>
-                    <ul className="list-disc list-inside space-y-0.5">
-                      {report.kostenAed.annahmen.map((a, i) => (
-                        <li key={i}>{a}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-            </Card>
+            </div>
           )}
 
           {/* V2: Arbeitszeit-Aufschlüsselung */}
           {report.arbeitszeitSchaetzung?.posten?.length > 0 && (
-            <Card>
-              <p className="text-xs text-gray-500 mb-3">Arbeitszeit-Aufschlüsselung</p>
-              <div className="space-y-2">
-                {report.arbeitszeitSchaetzung.posten.filter(p => p.stunden > 0).map((posten, i) => (
-                  <div key={i} className="flex items-center justify-between py-1 border-b border-gray-100 last:border-0">
-                    <span className="text-sm text-gray-700">{posten.name}</span>
-                    <span className="text-sm font-medium text-gray-900">{posten.stunden}h</span>
-                  </div>
-                ))}
+            <Card className="border-0 shadow-sm">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center">
+                  <span className="text-purple-600">⏱️</span>
+                </div>
+                <p className="font-semibold text-gray-900">Arbeitszeit</p>
+              </div>
+              <div className="space-y-3">
+                {report.arbeitszeitSchaetzung.posten.filter(p => p.stunden > 0).map((posten, i) => {
+                  const maxStunden = Math.max(...report.arbeitszeitSchaetzung.posten.map(p => p.stunden));
+                  const percent = (posten.stunden / maxStunden) * 100;
+                  return (
+                    <div key={i}>
+                      <div className="flex items-center justify-between text-sm mb-1">
+                        <span className="text-gray-600">{posten.name}</span>
+                        <span className="font-medium text-gray-900">{posten.stunden}h</span>
+                      </div>
+                      <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-gradient-to-r from-purple-500 to-purple-400 rounded-full transition-all duration-500"
+                          style={{ width: `${percent}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
                 {report.arbeitszeitSchaetzung.stundenRange && (
-                  <div className="flex items-center justify-between pt-2 border-t border-gray-200">
-                    <span className="text-sm font-medium text-gray-700">Gesamt</span>
-                    <span className="text-sm font-bold text-gray-900">
-                      {report.arbeitszeitSchaetzung.stundenRange.low} - {report.arbeitszeitSchaetzung.stundenRange.high}h
+                  <div className="flex items-center justify-between pt-3 mt-3 border-t border-gray-100">
+                    <span className="text-sm text-gray-500">Gesamt</span>
+                    <span className="text-lg font-bold text-purple-600">
+                      {report.arbeitszeitSchaetzung.stundenRange.mid}h
                     </span>
                   </div>
                 )}
@@ -865,30 +921,34 @@ function DamageTab({ vehicle, onUpdate, costs, isAdmin }) {
 
           {/* V2: Risk Flags */}
           {report.riskFlags?.length > 0 && (
-            <Card className="border-yellow-200 bg-yellow-50">
-              <p className="text-xs text-yellow-700 font-medium mb-2">⚡ Risiko-Hinweise</p>
-              <div className="flex flex-wrap gap-2">
-                {report.riskFlags.map((flag, i) => {
-                  // Übersetzung der Risk Flags
-                  const translations = {
-                    'HEADLIGHT_MISSING': 'Scheinwerfer fehlt',
-                    'BUMPER_STRUCTURAL_SUSPECT': 'Stoßfänger-Struktur prüfen',
-                    'RADIATOR_SUPPORT_SUSPECT': 'Kühlerträger prüfen',
-                    'ADAS_SENSOR_SUSPECT': 'Fahrassistenz-Sensoren prüfen',
-                    'SUSPENSION_ALIGNMENT_SUSPECT': 'Fahrwerk/Spur prüfen',
-                    'AIRBAG_DEPLOYED_SUSPECT': 'Airbag ausgelöst?',
-                    'FLUID_LEAK_SUSPECT': 'Flüssigkeitsaustritt prüfen',
-                    'FRAME_DAMAGE_SUSPECT': 'Rahmenschaden möglich',
-                  };
-                  const label = translations[flag] || flag;
-                  return (
-                    <span key={i} className="text-xs px-2 py-1 rounded bg-yellow-100 text-yellow-800">
-                      {label}
-                    </span>
-                  );
-                })}
+            <div className="rounded-2xl overflow-hidden">
+              <div className="bg-gradient-to-r from-yellow-500 to-amber-400 px-4 py-3 flex items-center gap-2">
+                <span className="text-white text-lg">⚡</span>
+                <span className="text-white font-semibold">Risiko-Hinweise</span>
               </div>
-            </Card>
+              <div className="bg-yellow-50 p-4">
+                <div className="flex flex-wrap gap-2">
+                  {report.riskFlags.map((flag, i) => {
+                    const translations = {
+                      'HEADLIGHT_MISSING': '💡 Scheinwerfer fehlt',
+                      'BUMPER_STRUCTURAL_SUSPECT': '🛡️ Stoßfänger-Struktur prüfen',
+                      'RADIATOR_SUPPORT_SUSPECT': '🌡️ Kühlerträger prüfen',
+                      'ADAS_SENSOR_SUSPECT': '📡 Fahrassistenz-Sensoren prüfen',
+                      'SUSPENSION_ALIGNMENT_SUSPECT': '🔄 Fahrwerk/Spur prüfen',
+                      'AIRBAG_DEPLOYED_SUSPECT': '🎈 Airbag ausgelöst?',
+                      'FLUID_LEAK_SUSPECT': '💧 Flüssigkeitsaustritt prüfen',
+                      'FRAME_DAMAGE_SUSPECT': '🔩 Rahmenschaden möglich',
+                    };
+                    const label = translations[flag] || flag;
+                    return (
+                      <span key={i} className="text-sm px-3 py-1.5 rounded-full bg-white text-yellow-800 font-medium shadow-sm border border-yellow-200">
+                        {label}
+                      </span>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
           )}
 
           {/* Legacy: Damaged Parts with Hours (fallback für alte Reports) */}
@@ -1290,130 +1350,168 @@ function CostsTab({ vehicle, costs, settings }) {
 
   return (
     <div className="space-y-4">
-      {/* Max Bid Highlight */}
-      <Card className="bg-blue-50 border-blue-200">
+      {/* Max Bid Hero Card */}
+      <div className="rounded-2xl bg-gradient-to-br from-blue-600 via-blue-500 to-indigo-600 p-5 text-white shadow-xl shadow-blue-500/20">
         <div className="text-center">
-          <p className="text-sm text-blue-600 mb-1">Empfohlenes Maximalgebot</p>
-          <p className="text-3xl font-bold text-blue-700">{formatCurrency(costs.maxBidAED, 'AED')}</p>
-          <p className="text-lg text-blue-600">({formatCurrency(costs.maxBid)})</p>
+          <p className="text-blue-100 text-xs uppercase tracking-wider mb-2">💎 Empfohlenes Maximalgebot</p>
+          <p className="text-4xl font-bold tracking-tight">{formatCurrency(costs.maxBidAED, 'AED')}</p>
+          <p className="text-xl text-blue-200 mt-1">≈ {formatCurrency(costs.maxBid)}</p>
         </div>
 
-        {/* Calculation breakdown */}
-        <div className="mt-4 pt-4 border-t border-blue-200 text-xs text-blue-700 space-y-1">
-          <p className="font-semibold mb-2">Berechnung:</p>
-          <div className="flex justify-between">
-            <span>Vergleichspreis DE</span>
-            <span>{formatCurrency(costs.marketPrice)}</span>
+        {/* Calculation breakdown - Collapsible style */}
+        <div className="mt-5 pt-4 border-t border-white/20 text-sm space-y-2">
+          <p className="text-blue-100 text-xs uppercase tracking-wider mb-3">📊 Berechnung</p>
+
+          <div className="bg-white/10 rounded-xl p-3 space-y-2">
+            <div className="flex justify-between">
+              <span className="text-blue-100">Vergleichspreis DE</span>
+              <span className="font-medium">{formatCurrency(costs.marketPrice)}</span>
+            </div>
+            <div className="flex justify-between text-red-200">
+              <span>- Zielprofit ({costs.targetProfitPct}%)</span>
+              <span>-{formatCurrency(costs.targetProfit)}</span>
+            </div>
+            <div className="flex justify-between text-red-200">
+              <span>- Sicherheitsabschlag</span>
+              <span>-{formatCurrency(costs.safetyDeduction)}</span>
+            </div>
+            <div className="flex justify-between text-red-200">
+              <span>- Transport</span>
+              <span>-{formatCurrency(costs.transportCost)}</span>
+            </div>
+            <div className="flex justify-between text-red-200">
+              <span>- TÜV/Zulassung</span>
+              <span>-{formatCurrency(costs.tuvCost)}</span>
+            </div>
+            <div className="flex justify-between text-red-200">
+              <span>- Sonstiges</span>
+              <span>-{formatCurrency(costs.miscCost)}</span>
+            </div>
+            <div className="flex justify-between text-red-200">
+              <span>- Reparatur (gepuffert)</span>
+              <span>-{formatCurrency(costs.repairBuffered)}</span>
+            </div>
           </div>
-          <div className="flex justify-between">
-            <span>- Zielprofit ({costs.targetProfitPct}%)</span>
-            <span>-{formatCurrency(costs.targetProfit)}</span>
-          </div>
-          <div className="flex justify-between">
-            <span>- Sicherheitsabschlag</span>
-            <span>-{formatCurrency(costs.safetyDeduction)}</span>
-          </div>
-          <div className="flex justify-between">
-            <span>- Transport</span>
-            <span>-{formatCurrency(costs.transportCost)}</span>
-          </div>
-          <div className="flex justify-between">
-            <span>- TÜV/Zulassung</span>
-            <span>-{formatCurrency(costs.tuvCost)}</span>
-          </div>
-          <div className="flex justify-between">
-            <span>- Sonstiges</span>
-            <span>-{formatCurrency(costs.miscCost)}</span>
-          </div>
-          <div className="flex justify-between">
-            <span>- Reparatur (gepuffert)</span>
-            <span>-{formatCurrency(costs.repairBuffered)}</span>
-          </div>
-          <div className="flex justify-between pt-2 border-t border-blue-200 font-semibold">
-            <span>Verfügbar für Kauf inkl. Zoll/MwSt</span>
-            <span>{formatCurrency(costs.marketPrice - costs.targetProfit - costs.safetyDeduction - costs.otherCosts)}</span>
-          </div>
-          <div className="flex justify-between">
-            <span>÷ 1,309 (Zoll 10% + MwSt 19%)</span>
-            <span>= {formatCurrency(costs.maxBid)}</span>
+
+          <div className="bg-white/20 rounded-xl p-3 mt-2">
+            <div className="flex justify-between font-semibold">
+              <span>Verfügbar inkl. Zoll/MwSt</span>
+              <span>{formatCurrency(costs.marketPrice - costs.targetProfit - costs.safetyDeduction - costs.otherCosts)}</span>
+            </div>
+            <div className="flex justify-between text-blue-200 text-sm mt-1">
+              <span>÷ 1,309 (Zoll + MwSt)</span>
+              <span className="font-bold text-white">= {formatCurrency(costs.maxBid)}</span>
+            </div>
           </div>
         </div>
-      </Card>
+      </div>
 
-      <Card>
-        <h3 className="font-semibold text-gray-900 mb-4">Kostenaufstellung (aktuelles Gebot)</h3>
-        <div className="space-y-3">
-          <CostRow label={`Kaufpreis (${formatCurrency(costs.bidPriceAED, 'AED')})`} value={costs.bidPrice} />
-          <CostRow label="Zoll (10%)" value={costs.duty10} />
-          <CostRow label="MwSt (19%)" value={costs.vat19} />
-          <CostRow label="Transport" value={costs.transportCost} />
-          <CostRow label="TÜV/Zulassung" value={costs.tuvCost} />
-          <CostRow label="Sonstiges" value={costs.miscCost} />
+      {/* Cost Breakdown Card */}
+      <Card className="border-0 shadow-sm">
+        <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+          <span className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">📋</span>
+          Kostenaufstellung
+        </h3>
+        <div className="space-y-2">
+          <CostRow label={`Kaufpreis`} sublabel={formatCurrency(costs.bidPriceAED, 'AED')} value={costs.bidPrice} />
+          <CostRow label="Zoll" sublabel="10%" value={costs.duty10} />
+          <CostRow label="MwSt" sublabel="19%" value={costs.vat19} />
+          <CostRow label="Transport" icon="🚢" value={costs.transportCost} />
+          <CostRow label="TÜV/Zulassung" icon="📄" value={costs.tuvCost} />
+          <CostRow label="Sonstiges" icon="📦" value={costs.miscCost} />
           <CostRow
-            label={`Reparatur (+${vehicle.costInputs?.repairBufferPct || 0}% Puffer)`}
+            label="Reparatur"
+            sublabel={`+${vehicle.costInputs?.repairBufferPct || 0}% Puffer`}
             value={costs.repairBuffered}
-            sublabel={
+            badge={
               costs.repairEstimateSource === 'mechanic'
                 ? `Ø ${costs.repairEstimateCount} Mechaniker`
                 : costs.repairEstimateSource === 'ai'
-                  ? 'KI-Schätzung'
+                  ? '🤖 KI'
                   : null
             }
+            icon="🔧"
           />
 
-          <div className="pt-3 mt-3 border-t-2 border-gray-200">
-            <CostRow label="GESAMTKOSTEN" value={costs.totalCost} bold />
+          <div className="pt-4 mt-4 border-t-2 border-gray-200">
+            <div className="flex justify-between items-center bg-gray-900 text-white rounded-xl p-4">
+              <span className="font-semibold">GESAMTKOSTEN</span>
+              <span className="text-2xl font-bold">{formatCurrency(costs.totalCost)}</span>
+            </div>
           </div>
         </div>
       </Card>
 
-      <Card>
-        <h3 className="font-semibold text-gray-900 mb-4">Ergebnis</h3>
-        <div className="space-y-3">
-          <CostRow label="Vergleichspreis DE" value={costs.marketPrice} />
+      {/* Result Card */}
+      <div className={`rounded-2xl p-5 ${
+        costs.profit >= 0
+          ? 'bg-gradient-to-br from-green-500 to-emerald-600'
+          : 'bg-gradient-to-br from-red-500 to-rose-600'
+      } text-white shadow-xl ${costs.profit >= 0 ? 'shadow-green-500/20' : 'shadow-red-500/20'}`}>
+        <h3 className="font-semibold mb-4 flex items-center gap-2 text-white/80">
+          <span className="text-xl">{costs.profit >= 0 ? '🎉' : '⚠️'}</span>
+          Ergebnis
+        </h3>
 
-          <div className="pt-3 mt-3 border-t-2 border-gray-200 space-y-3">
+        <div className="space-y-3">
+          <div className="flex justify-between items-center bg-white/10 rounded-xl p-3">
+            <span className="text-white/80">Vergleichspreis DE</span>
+            <span className="font-semibold text-lg">{formatCurrency(costs.marketPrice)}</span>
+          </div>
+
+          <div className="bg-white/20 rounded-xl p-4">
             <div className="flex justify-between items-center">
-              <span className="font-semibold text-gray-900">Profit</span>
-              <span className={`text-xl font-bold ${costs.profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                {formatCurrency(costs.profit)}
+              <span className="font-semibold">Profit</span>
+              <span className="text-3xl font-bold">
+                {costs.profit >= 0 ? '+' : ''}{formatCurrency(costs.profit)}
               </span>
             </div>
 
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">ROI</span>
-              <span className={`font-medium ${costs.roiPct >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+            <div className="flex justify-between items-center mt-3 pt-3 border-t border-white/20">
+              <span className="text-white/80">ROI</span>
+              <span className="font-bold text-xl">
                 {formatPercent(costs.roiPct)}
               </span>
             </div>
+          </div>
 
-            <div className="flex justify-between items-center pt-3 border-t border-gray-100">
-              <span className="text-gray-600">Bewertung</span>
-              <Ampel status={ampel} size="lg" showLabel />
-            </div>
+          <div className="flex justify-between items-center bg-white/10 rounded-xl p-3">
+            <span className="text-white/80">Bewertung</span>
+            <Ampel status={ampel} size="lg" showLabel />
           </div>
         </div>
-      </Card>
+      </div>
 
-      <Button fullWidth variant="secondary" onClick={handleExport}>
-        Kalkulation teilen / exportieren
-      </Button>
+      {/* Export Button */}
+      <button
+        onClick={handleExport}
+        className="w-full bg-gray-900 hover:bg-gray-800 active:bg-gray-700 text-white font-medium py-4 px-6 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 shadow-lg"
+      >
+        <span>📤</span>
+        <span>Kalkulation teilen / exportieren</span>
+      </button>
     </div>
   );
 }
 
-function CostRow({ label, value, sublabel, bold }) {
+function CostRow({ label, value, sublabel, bold, icon, badge }) {
   return (
-    <div className="flex justify-between items-center">
-      <div>
-        <span className={bold ? 'font-semibold text-gray-900' : 'text-gray-600'}>
-          {label}
-        </span>
-        {sublabel && (
-          <p className="text-xs text-gray-400">{sublabel}</p>
-        )}
+    <div className="flex justify-between items-center py-2.5 border-b border-gray-100 last:border-0">
+      <div className="flex items-center gap-2">
+        {icon && <span className="text-sm">{icon}</span>}
+        <div>
+          <span className={bold ? 'font-semibold text-gray-900' : 'text-gray-700'}>
+            {label}
+          </span>
+          {sublabel && (
+            <span className="text-xs text-gray-400 ml-2">{sublabel}</span>
+          )}
+          {badge && (
+            <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full ml-2">{badge}</span>
+          )}
+        </div>
       </div>
-      <span className={bold ? 'font-semibold text-gray-900' : 'text-gray-900'}>
+      <span className={bold ? 'font-bold text-lg text-gray-900' : 'font-medium text-gray-900'}>
         {formatCurrency(value)}
       </span>
     </div>
