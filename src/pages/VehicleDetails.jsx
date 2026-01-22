@@ -27,6 +27,8 @@ import Ampel from '../components/Ampel';
 import Modal from '../components/Modal';
 import LoadingSpinner from '../components/LoadingSpinner';
 import EmptyState from '../components/EmptyState';
+import ImageGallery from '../components/ImageGallery';
+import Lightbox from '../components/Lightbox';
 
 // UUID Generator (safe for non-HTTPS)
 function generateUUID() {
@@ -266,7 +268,8 @@ function InfoRow({ label, children }) {
 // ============ PHOTOS TAB ============
 function PhotosTab({ vehicle, onUpdate, isAdmin }) {
   const [uploading, setUploading] = useState(false);
-  const [previewPhoto, setPreviewPhoto] = useState(null);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
 
   const handleFileChange = async (e) => {
     const files = Array.from(e.target.files);
@@ -309,7 +312,15 @@ function PhotosTab({ vehicle, onUpdate, isAdmin }) {
     if (!isAdmin) return;
     const updated = (vehicle.photos || []).filter(p => p.id !== photoId);
     await onUpdate({ photos: updated });
-    setPreviewPhoto(null);
+    // Close lightbox if no photos left
+    if (updated.length === 0) {
+      setLightboxOpen(false);
+    }
+  };
+
+  const handlePhotoClick = (index) => {
+    setLightboxIndex(index);
+    setLightboxOpen(true);
   };
 
   return (
@@ -368,23 +379,12 @@ function PhotosTab({ vehicle, onUpdate, isAdmin }) {
         </div>
       )}
 
-      {/* Photo Grid */}
+      {/* Photo Gallery with Swipe */}
       {vehicle.photos?.length > 0 ? (
-        <div className="grid grid-cols-3 gap-2">
-          {vehicle.photos.map((photo) => (
-            <div
-              key={photo.id}
-              onClick={() => setPreviewPhoto(photo)}
-              className="aspect-square rounded-xl overflow-hidden bg-gray-100 cursor-pointer"
-            >
-              <img
-                src={photo.data}
-                alt=""
-                className="w-full h-full object-cover"
-              />
-            </div>
-          ))}
-        </div>
+        <ImageGallery
+          photos={vehicle.photos}
+          onPhotoClick={handlePhotoClick}
+        />
       ) : (
         <EmptyState
           title="Keine Fotos"
@@ -392,34 +392,15 @@ function PhotosTab({ vehicle, onUpdate, isAdmin }) {
         />
       )}
 
-      {/* Photo Preview Modal */}
-      <Modal
-        isOpen={!!previewPhoto}
-        onClose={() => setPreviewPhoto(null)}
-        title="Foto"
-      >
-        {previewPhoto && (
-          <div className="space-y-4">
-            <img
-              src={previewPhoto.data}
-              alt=""
-              className="w-full rounded-xl"
-            />
-            <p className="text-xs text-gray-500">
-              {formatDateTime(previewPhoto.createdAt)}
-            </p>
-            {isAdmin && (
-              <Button
-                variant="danger"
-                fullWidth
-                onClick={() => handleDeletePhoto(previewPhoto.id)}
-              >
-                Foto löschen
-              </Button>
-            )}
-          </div>
-        )}
-      </Modal>
+      {/* Fullscreen Lightbox */}
+      <Lightbox
+        photos={vehicle.photos || []}
+        initialIndex={lightboxIndex}
+        isOpen={lightboxOpen}
+        onClose={() => setLightboxOpen(false)}
+        onDelete={handleDeletePhoto}
+        canDelete={isAdmin}
+      />
     </div>
   );
 }
