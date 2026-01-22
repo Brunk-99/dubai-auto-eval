@@ -230,41 +230,9 @@ export default function Dashboard() {
         />
       </div>
 
-      {/* Stats summary for Admin */}
+      {/* Stats summary for Admin - optimiert: 1 Iteration statt 3 */}
       {userIsAdmin && vehicles.length > 0 && (
-        <div className="px-4 py-3 bg-white border-b border-gray-100">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <svg className="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" />
-              </svg>
-              <span className="text-sm font-medium text-gray-700">
-                {filteredAndSortedVehicles.length} Fahrzeuge
-              </span>
-            </div>
-            <div className="flex items-center gap-3 text-sm">
-              <span className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-green-50">
-                <span className="w-2.5 h-2.5 rounded-full bg-green-500"></span>
-                <span className="text-green-700 font-medium">
-                  {filteredAndSortedVehicles.filter(v => getAmpelStatus(v, settings).color === 'green').length}
-                </span>
-              </span>
-              <span className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-yellow-50">
-                <span className="w-2.5 h-2.5 rounded-full bg-yellow-500"></span>
-                <span className="text-yellow-700 font-medium">
-                  {filteredAndSortedVehicles.filter(v => getAmpelStatus(v, settings).color === 'yellow').length}
-                </span>
-              </span>
-              <span className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-red-50">
-                <span className="w-2.5 h-2.5 rounded-full bg-red-500"></span>
-                <span className="text-red-700 font-medium">
-                  {filteredAndSortedVehicles.filter(v => getAmpelStatus(v, settings).color === 'red').length}
-                </span>
-              </span>
-            </div>
-          </div>
-        </div>
+        <StatsBar vehicles={filteredAndSortedVehicles} settings={settings} />
       )}
 
       {/* Vehicle list */}
@@ -308,6 +276,49 @@ export default function Dashboard() {
           </svg>
         </FloatingButton>
       )}
+    </div>
+  );
+}
+
+// Optimierte Stats-Berechnung: 1 Iteration statt 3 separate filter()
+function StatsBar({ vehicles, settings }) {
+  // useMemo für gecachte Berechnung
+  const stats = useMemo(() => {
+    const counts = { green: 0, yellow: 0, red: 0 };
+    for (const v of vehicles) {
+      const color = getAmpelStatus(v, settings).color;
+      if (color in counts) counts[color]++;
+    }
+    return counts;
+  }, [vehicles, settings]);
+
+  return (
+    <div className="px-4 py-3 bg-white border-b border-gray-100">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <svg className="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" />
+          </svg>
+          <span className="text-sm font-medium text-gray-700 tabular-nums">
+            {vehicles.length} Fahrzeuge
+          </span>
+        </div>
+        <div className="flex items-center gap-3 text-sm">
+          <span className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-green-50">
+            <span className="w-2.5 h-2.5 rounded-full bg-green-500" aria-hidden="true"></span>
+            <span className="text-green-700 font-medium tabular-nums">{stats.green}</span>
+          </span>
+          <span className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-yellow-50">
+            <span className="w-2.5 h-2.5 rounded-full bg-yellow-500" aria-hidden="true"></span>
+            <span className="text-yellow-700 font-medium tabular-nums">{stats.yellow}</span>
+          </span>
+          <span className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-red-50">
+            <span className="w-2.5 h-2.5 rounded-full bg-red-500" aria-hidden="true"></span>
+            <span className="text-red-700 font-medium tabular-nums">{stats.red}</span>
+          </span>
+        </div>
+      </div>
     </div>
   );
 }
