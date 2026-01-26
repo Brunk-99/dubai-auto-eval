@@ -243,6 +243,37 @@ function InfoTab({ vehicle, isAdmin }) {
     vehicle.auctionLocation && { label: 'Auktion', value: vehicle.auctionLocation },
   ].filter(Boolean);
 
+  // Build mobile.de search URL
+  const buildMobileDeUrl = () => {
+    // Parse brand and model from title (e.g., "BMW X5" or "Mercedes-Benz C-Klasse")
+    const title = vehicle.title || '';
+    const parts = title.split(' ');
+    const brand = parts[0] || '';
+    const model = parts.slice(1).join(' ') || '';
+
+    // Build search query
+    const searchParams = new URLSearchParams();
+
+    // Add search text (brand + model)
+    if (title) {
+      searchParams.set('s', title);
+    }
+
+    // Add year range if available (±1 year)
+    if (vehicle.year) {
+      searchParams.set('fr', String(vehicle.year - 1));
+      searchParams.set('to', String(vehicle.year + 1));
+    }
+
+    // Add mileage range if available (up to +20%)
+    if (vehicle.mileage) {
+      const maxMileage = Math.ceil(vehicle.mileage * 1.2 / 10000) * 10000;
+      searchParams.set('ml', String(maxMileage));
+    }
+
+    return `https://suchen.mobile.de/fahrzeuge/search.html?${searchParams.toString()}`;
+  };
+
   return (
     <div className="space-y-4">
       {/* Hero Card: Status + Kerndaten */}
@@ -307,6 +338,24 @@ function InfoTab({ vehicle, isAdmin }) {
           <h3 className="text-xs text-gray-400 uppercase tracking-wide mb-2">Notizen</h3>
           <p className="text-gray-700 whitespace-pre-wrap leading-relaxed text-sm">{vehicle.notes}</p>
         </Card>
+      )}
+
+      {/* Mobile.de Search Button - Admin Only */}
+      {isAdmin && vehicle.title && (
+        <a
+          href={buildMobileDeUrl()}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-center gap-2 w-full py-3 px-4 bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-white font-medium rounded-xl transition-colors"
+        >
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <span>Auf mobile.de suchen</span>
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+          </svg>
+        </a>
       )}
 
       {/* Meta Info - dezent am Ende */}
