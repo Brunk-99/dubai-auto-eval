@@ -86,8 +86,8 @@ export default function QuickCalc() {
   // ========== AUKTION CALCULATIONS ==========
   const market2 = parseCurrencyInput(marketPriceDE2) || 0;
 
-  // 20% minimum margin for auction
-  const auctionTargetPct = 20;
+  // 15% minimum margin for auction
+  const auctionTargetPct = 15;
   const targetMargin = market2 * (auctionTargetPct / 100);
 
   // Formula: maxBid = (marketPrice - targetMargin - otherCosts) / 1.309
