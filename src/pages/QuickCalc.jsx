@@ -310,8 +310,16 @@ export default function QuickCalc() {
                     <span className="tabular-nums">{formatCurrency(auctionVat)}</span>
                   </div>
                   <div className="flex justify-between text-gray-500">
-                    <span>+ Nebenkosten</span>
-                    <span className="tabular-nums">{formatCurrency(otherCosts)}</span>
+                    <span>+ Transport</span>
+                    <span className="tabular-nums">{formatCurrency(transport)}</span>
+                  </div>
+                  <div className="flex justify-between text-gray-500">
+                    <span>+ TÜV/Zulassung</span>
+                    <span className="tabular-nums">{formatCurrency(tuv)}</span>
+                  </div>
+                  <div className="flex justify-between text-gray-500">
+                    <span>+ Sonstiges</span>
+                    <span className="tabular-nums">{formatCurrency(misc)}</span>
                   </div>
                   <div className="flex justify-between font-medium text-gray-700 pt-1">
                     <span>= Gesamtkosten</span>
