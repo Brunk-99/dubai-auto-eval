@@ -3,7 +3,7 @@
 
 const CACHE_KEY = 'exchange_rate_cache';
 const CACHE_DURATION = 4 * 60 * 60 * 1000; // 4 hours in ms
-const FALLBACK_RATE = 4.00; // Fallback if API fails
+const FALLBACK_RATE = 4.35; // Fallback if API fails
 
 // Get cached rate from localStorage
 function getCachedRate() {
