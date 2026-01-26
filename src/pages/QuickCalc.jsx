@@ -5,8 +5,6 @@ import { getCostDefaults } from '../lib/storage';
 import { getExchangeRate, aedToEur, eurToAed } from '../lib/exchangeRate';
 import { formatCurrency, parseCurrencyInput } from '../lib/formatters';
 import Header from '../components/Header';
-import Card from '../components/Card';
-import Input from '../components/Input';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/Tabs';
 
@@ -79,10 +77,10 @@ export default function QuickCalc() {
   const marginPct1 = market1 > 0 ? (margin1 / market1) * 100 : 0;
 
   const getMarginColor = (margin, pct) => {
-    if (margin < 0) return 'text-red-600';
-    if (pct >= 35) return 'text-green-600';
-    if (pct >= 10) return 'text-yellow-600';
-    return 'text-red-600';
+    if (margin < 0) return { bg: 'bg-red-50', text: 'text-red-600', border: 'border-red-100' };
+    if (pct >= 35) return { bg: 'bg-green-50', text: 'text-green-600', border: 'border-green-100' };
+    if (pct >= 10) return { bg: 'bg-yellow-50', text: 'text-yellow-600', border: 'border-yellow-100' };
+    return { bg: 'bg-red-50', text: 'text-red-600', border: 'border-red-100' };
   };
 
   // ========== AUKTION CALCULATIONS ==========
@@ -93,7 +91,6 @@ export default function QuickCalc() {
   const targetMargin = market2 * (auctionTargetPct / 100);
 
   // Formula: maxBid = (marketPrice - targetMargin - otherCosts) / 1.309
-  // 1.309 = 1 + 0.10 (duty) + 0.19 * 1.10 (VAT on price+duty)
   const maxBidRaw = (market2 - targetMargin - otherCosts) / 1.309;
   const maxBidEUR = Math.max(0, Math.floor(maxBidRaw / 50) * 50);
   const maxBidAED = exchangeRate ? eurToAed(maxBidEUR, exchangeRate) : 0;
@@ -114,6 +111,8 @@ export default function QuickCalc() {
     );
   }
 
+  const marginColors = getMarginColor(margin1, marginPct1);
+
   return (
     <div className="min-h-screen bg-gray-50 pb-8">
       <Header
@@ -123,18 +122,10 @@ export default function QuickCalc() {
       />
 
       <div className="p-4 space-y-4">
-        {/* Exchange Rate Info */}
-        <div className="flex items-center justify-between text-sm">
-          <span className="text-gray-500">Wechselkurs</span>
-          <div className="text-right">
-            <span className="font-medium tabular-nums">1 EUR = {exchangeRate?.toFixed(4)} AED</span>
-            {rateInfo?.updatedAt && (
-              <p className="text-xs text-gray-400">{rateInfo.updatedAt}</p>
-            )}
-            {rateInfo?.isFallback && (
-              <p className="text-xs text-orange-500">Fallback-Kurs</p>
-            )}
-          </div>
+        {/* Kurs-Banner */}
+        <div className="text-center py-1 text-gray-400 text-sm">
+          1 EUR = {exchangeRate?.toFixed(2)} AED
+          {rateInfo?.isFallback && <span className="text-orange-500 ml-2">(Fallback)</span>}
         </div>
 
         {/* Tabs */}
@@ -146,238 +137,175 @@ export default function QuickCalc() {
 
           {/* ========== SCHNELLRECHNER TAB ========== */}
           <TabsContent value="schnellrechner" className="mt-4 space-y-4">
-            {/* Dealer Price Input */}
-            <Card>
-              <h3 className="text-xs text-gray-400 uppercase tracking-wide mb-4">Händlerpreis</h3>
-
-              <Input
-                label="Verkaufspreis in AED"
-                placeholder="z.B. 50000"
-                type="text"
-                inputMode="decimal"
-                value={dealerPriceAED}
-                onChange={(e) => setDealerPriceAED(e.target.value)}
-                suffix="AED"
-              />
-
-              {dealerAED > 0 && (
-                <div className="mt-3 p-3 bg-blue-50 rounded-lg">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Umgerechnet</span>
-                    <span className="text-lg font-semibold text-blue-600 tabular-nums">
-                      {formatCurrency(dealerEUR)}
-                    </span>
-                  </div>
+            {/* Haupt-Eingaben */}
+            <div className="bg-white rounded-2xl p-5 shadow-sm">
+              <div className="grid grid-cols-2 gap-6">
+                <div>
+                  <div className="text-xs text-gray-400 uppercase tracking-wider mb-2">Einkauf AED</div>
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={dealerPriceAED}
+                    onChange={(e) => setDealerPriceAED(e.target.value)}
+                    placeholder="0"
+                    className="text-3xl font-light text-gray-900 tabular-nums w-full bg-transparent border-none outline-none placeholder-gray-300"
+                  />
+                  {dealerAED > 0 && (
+                    <div className="text-gray-400 text-sm mt-1">≈ {formatCurrency(dealerEUR)}</div>
+                  )}
                 </div>
-              )}
-            </Card>
+                <div>
+                  <div className="text-xs text-gray-400 uppercase tracking-wider mb-2">Verkauf EUR</div>
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={marketPriceDE1}
+                    onChange={(e) => setMarketPriceDE1(e.target.value)}
+                    placeholder="0"
+                    className="text-3xl font-light text-gray-900 tabular-nums w-full bg-transparent border-none outline-none placeholder-gray-300"
+                  />
+                </div>
+              </div>
+            </div>
 
-            {/* Market Reference */}
-            <Card>
-              <h3 className="text-xs text-gray-400 uppercase tracking-wide mb-4">Referenz mobile.de</h3>
-
-              <Input
-                label="Vergleichspreis DE"
-                placeholder="z.B. 25000"
-                type="text"
-                inputMode="decimal"
-                value={marketPriceDE1}
-                onChange={(e) => setMarketPriceDE1(e.target.value)}
-                suffix="€"
-              />
-            </Card>
-
-            {/* Cost Inputs */}
-            <Card>
-              <h3 className="text-xs text-gray-400 uppercase tracking-wide mb-4">Nebenkosten</h3>
-
-              <div className="space-y-3">
-                <Input
-                  label="Transport"
-                  placeholder="2500"
+            {/* Kosten Breakdown */}
+            <div className="bg-white rounded-2xl p-5 shadow-sm space-y-3">
+              <div className="flex justify-between text-gray-400">
+                <span>Kaufpreis</span>
+                <span className="text-gray-900 tabular-nums">{formatCurrency(dealerEUR)}</span>
+              </div>
+              <div className="flex justify-between text-gray-400">
+                <span>Zoll (10%)</span>
+                <span className="text-gray-900 tabular-nums">{formatCurrency(duty1)}</span>
+              </div>
+              <div className="flex justify-between text-gray-400">
+                <span>EUSt (19%)</span>
+                <span className="text-gray-900 tabular-nums">{formatCurrency(vat1)}</span>
+              </div>
+              <div className="flex justify-between text-gray-400 items-center">
+                <span>Transport</span>
+                <input
                   type="text"
                   inputMode="decimal"
                   value={transportCost}
                   onChange={(e) => setTransportCost(e.target.value)}
-                  suffix="€"
+                  className="text-gray-900 tabular-nums text-right bg-gray-50 rounded px-2 py-1 w-24 border border-gray-200"
                 />
-
-                <Input
-                  label="TÜV/Zulassung"
-                  placeholder="800"
+              </div>
+              <div className="flex justify-between text-gray-400 items-center">
+                <span>TÜV/Zulassung</span>
+                <input
                   type="text"
                   inputMode="decimal"
                   value={tuvCost}
                   onChange={(e) => setTuvCost(e.target.value)}
-                  suffix="€"
+                  className="text-gray-900 tabular-nums text-right bg-gray-50 rounded px-2 py-1 w-24 border border-gray-200"
                 />
-
-                <Input
-                  label="Sonstiges"
-                  placeholder="500"
+              </div>
+              <div className="flex justify-between text-gray-400 items-center">
+                <span>Sonstiges</span>
+                <input
                   type="text"
                   inputMode="decimal"
                   value={miscCost}
                   onChange={(e) => setMiscCost(e.target.value)}
-                  suffix="€"
+                  className="text-gray-900 tabular-nums text-right bg-gray-50 rounded px-2 py-1 w-24 border border-gray-200"
                 />
               </div>
-            </Card>
+              <div className="border-t border-gray-100 pt-3 flex justify-between">
+                <span className="text-gray-600 font-medium">Gesamt</span>
+                <span className="text-gray-900 font-semibold tabular-nums">{formatCurrency(totalCost1)}</span>
+              </div>
+            </div>
 
-            {/* Results */}
+            {/* Marge */}
             {dealerAED > 0 && market1 > 0 && (
-              <Card>
-                <h3 className="text-xs text-gray-400 uppercase tracking-wide mb-4">Kalkulation</h3>
-
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Kaufpreis (EUR)</span>
-                    <span className="tabular-nums">{formatCurrency(dealerEUR)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Zoll (10%)</span>
-                    <span className="tabular-nums">{formatCurrency(duty1)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">EUSt (19%)</span>
-                    <span className="tabular-nums">{formatCurrency(vat1)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Transport</span>
-                    <span className="tabular-nums">{formatCurrency(transport)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">TÜV/Zulassung</span>
-                    <span className="tabular-nums">{formatCurrency(tuv)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Sonstiges</span>
-                    <span className="tabular-nums">{formatCurrency(misc)}</span>
-                  </div>
-
-                  <div className="border-t border-gray-100 my-2 pt-2">
-                    <div className="flex justify-between font-medium">
-                      <span className="text-gray-700">Gesamtkosten</span>
-                      <span className="tabular-nums">{formatCurrency(totalCost1)}</span>
-                    </div>
-                  </div>
-
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Marktpreis DE</span>
-                    <span className="tabular-nums">{formatCurrency(market1)}</span>
-                  </div>
+              <div className={`${marginColors.bg} ${marginColors.border} border rounded-2xl p-6 text-center`}>
+                <div className={`${marginColors.text} text-sm uppercase tracking-wider`}>Deine Marge</div>
+                <div className={`text-4xl font-bold mt-2 tabular-nums ${marginColors.text}`}>
+                  {formatCurrency(margin1)}
                 </div>
-              </Card>
-            )}
-
-            {/* Margin Result */}
-            {dealerAED > 0 && market1 > 0 && (
-              <Card className={`${margin1 >= 0 ? 'bg-green-50 border-green-100' : 'bg-red-50 border-red-100'}`}>
-                <h3 className="text-xs text-gray-500 uppercase tracking-wide mb-2">Deine Marge</h3>
-
-                <div className="flex items-end justify-between">
-                  <div>
-                    <p className={`text-3xl font-bold tabular-nums ${getMarginColor(margin1, marginPct1)}`}>
-                      {formatCurrency(margin1)}
-                    </p>
-                    <p className={`text-sm tabular-nums ${getMarginColor(margin1, marginPct1)}`}>
-                      {marginPct1.toFixed(1)}% vom Verkaufspreis
-                    </p>
-                  </div>
-                </div>
-              </Card>
+                <div className={`text-xl mt-1 ${marginColors.text}`}>{marginPct1.toFixed(1)}%</div>
+              </div>
             )}
           </TabsContent>
 
           {/* ========== AUKTION TAB ========== */}
           <TabsContent value="auktion" className="mt-4 space-y-4">
-            {/* Market Reference */}
-            <Card>
-              <h3 className="text-xs text-gray-400 uppercase tracking-wide mb-4">Referenz mobile.de</h3>
-
-              <Input
-                label="Vergleichspreis DE"
-                placeholder="z.B. 25000"
+            {/* Haupt-Eingabe */}
+            <div className="bg-white rounded-2xl p-5 shadow-sm">
+              <div className="text-xs text-gray-400 uppercase tracking-wider mb-2">Verkaufspreis DE</div>
+              <input
                 type="text"
                 inputMode="decimal"
                 value={marketPriceDE2}
                 onChange={(e) => setMarketPriceDE2(e.target.value)}
-                suffix="€"
+                placeholder="0"
+                className="text-3xl font-light text-gray-900 tabular-nums w-full bg-transparent border-none outline-none placeholder-gray-300"
               />
-              <p className="text-xs text-gray-400 mt-1">
-                Günstigstes vergleichbares Fahrzeug
+              <p className="text-xs text-gray-400 mt-2">
+                Günstigstes vergleichbares Fahrzeug auf mobile.de
               </p>
-            </Card>
+            </div>
 
-            {/* Cost Inputs */}
-            <Card>
-              <h3 className="text-xs text-gray-400 uppercase tracking-wide mb-4">Nebenkosten</h3>
-
-              <div className="space-y-3">
-                <Input
-                  label="Transport"
-                  placeholder="2500"
+            {/* Nebenkosten */}
+            <div className="bg-white rounded-2xl p-5 shadow-sm space-y-3">
+              <div className="text-xs text-gray-400 uppercase tracking-wider mb-2">Nebenkosten</div>
+              <div className="flex justify-between text-gray-400 items-center">
+                <span>Transport</span>
+                <input
                   type="text"
                   inputMode="decimal"
                   value={transportCost}
                   onChange={(e) => setTransportCost(e.target.value)}
-                  suffix="€"
+                  className="text-gray-900 tabular-nums text-right bg-gray-50 rounded px-2 py-1 w-24 border border-gray-200"
                 />
-
-                <Input
-                  label="TÜV/Zulassung"
-                  placeholder="800"
+              </div>
+              <div className="flex justify-between text-gray-400 items-center">
+                <span>TÜV/Zulassung</span>
+                <input
                   type="text"
                   inputMode="decimal"
                   value={tuvCost}
                   onChange={(e) => setTuvCost(e.target.value)}
-                  suffix="€"
+                  className="text-gray-900 tabular-nums text-right bg-gray-50 rounded px-2 py-1 w-24 border border-gray-200"
                 />
-
-                <Input
-                  label="Sonstiges"
-                  placeholder="500"
+              </div>
+              <div className="flex justify-between text-gray-400 items-center">
+                <span>Sonstiges</span>
+                <input
                   type="text"
                   inputMode="decimal"
                   value={miscCost}
                   onChange={(e) => setMiscCost(e.target.value)}
-                  suffix="€"
+                  className="text-gray-900 tabular-nums text-right bg-gray-50 rounded px-2 py-1 w-24 border border-gray-200"
                 />
               </div>
-            </Card>
+            </div>
 
             {/* Max Bid Result */}
             {market2 > 0 && (
-              <Card className="bg-blue-50 border-blue-100">
-                <h3 className="text-xs text-blue-600 uppercase tracking-wide mb-1">
-                  Maximales Gebot
-                </h3>
-                <p className="text-xs text-gray-500 mb-4">
-                  Für mindestens {auctionTargetPct}% Marge
-                </p>
-
-                <div className="flex items-end justify-between mb-4">
-                  <div>
-                    <p className="text-3xl font-bold text-blue-600 tabular-nums">
-                      {formatCurrency(maxBidAED, 'AED')}
-                    </p>
-                    <p className="text-sm text-gray-500 tabular-nums">
-                      ≈ {formatCurrency(maxBidEUR)}
-                    </p>
-                  </div>
+              <div className="bg-blue-50 border border-blue-100 rounded-2xl p-6 text-center">
+                <div className="text-blue-600 text-sm uppercase tracking-wider">Maximales Gebot</div>
+                <div className="text-blue-600 text-xs mt-1">für mind. {auctionTargetPct}% Marge</div>
+                <div className="text-4xl font-bold text-blue-600 mt-3 tabular-nums">
+                  {formatCurrency(maxBidAED, 'AED')}
+                </div>
+                <div className="text-gray-500 text-sm mt-1 tabular-nums">
+                  ≈ {formatCurrency(maxBidEUR)}
                 </div>
 
-                {/* Breakdown at max bid */}
-                <div className="border-t border-blue-200 pt-3 space-y-1 text-sm">
-                  <div className="flex justify-between text-gray-600">
+                {/* Breakdown */}
+                <div className="border-t border-blue-200 mt-4 pt-4 space-y-1 text-sm text-left">
+                  <div className="flex justify-between text-gray-500">
                     <span>Kaufpreis</span>
                     <span className="tabular-nums">{formatCurrency(maxBidEUR)}</span>
                   </div>
-                  <div className="flex justify-between text-gray-600">
+                  <div className="flex justify-between text-gray-500">
                     <span>+ Zoll & EUSt</span>
                     <span className="tabular-nums">{formatCurrency(auctionDuty + auctionVat)}</span>
                   </div>
-                  <div className="flex justify-between text-gray-600">
+                  <div className="flex justify-between text-gray-500">
                     <span>+ Nebenkosten</span>
                     <span className="tabular-nums">{formatCurrency(otherCosts)}</span>
                   </div>
@@ -385,7 +313,7 @@ export default function QuickCalc() {
                     <span>= Gesamtkosten</span>
                     <span className="tabular-nums">{formatCurrency(auctionTotalCost)}</span>
                   </div>
-                  <div className="flex justify-between text-gray-600 pt-2">
+                  <div className="flex justify-between text-gray-500 pt-2">
                     <span>Verkauf DE</span>
                     <span className="tabular-nums">{formatCurrency(market2)}</span>
                   </div>
@@ -394,7 +322,7 @@ export default function QuickCalc() {
                     <span className="tabular-nums">{formatCurrency(auctionProfit)} ({auctionProfitPct.toFixed(1)}%)</span>
                   </div>
                 </div>
-              </Card>
+              </div>
             )}
           </TabsContent>
         </Tabs>
