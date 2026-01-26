@@ -248,41 +248,6 @@ export default function QuickCalc() {
               </p>
             </div>
 
-            {/* Nebenkosten */}
-            <div className="bg-white rounded-2xl p-5 shadow-sm space-y-3">
-              <div className="text-xs text-gray-400 uppercase tracking-wider mb-2">Nebenkosten</div>
-              <div className="flex justify-between text-gray-400 items-center">
-                <span>Transport</span>
-                <input
-                  type="text"
-                  inputMode="decimal"
-                  value={transportCost}
-                  onChange={(e) => setTransportCost(e.target.value)}
-                  className="text-gray-900 tabular-nums text-right bg-gray-50 rounded px-2 py-1 w-24 border border-gray-200"
-                />
-              </div>
-              <div className="flex justify-between text-gray-400 items-center">
-                <span>TÜV/Zulassung</span>
-                <input
-                  type="text"
-                  inputMode="decimal"
-                  value={tuvCost}
-                  onChange={(e) => setTuvCost(e.target.value)}
-                  className="text-gray-900 tabular-nums text-right bg-gray-50 rounded px-2 py-1 w-24 border border-gray-200"
-                />
-              </div>
-              <div className="flex justify-between text-gray-400 items-center">
-                <span>Sonstiges</span>
-                <input
-                  type="text"
-                  inputMode="decimal"
-                  value={miscCost}
-                  onChange={(e) => setMiscCost(e.target.value)}
-                  className="text-gray-900 tabular-nums text-right bg-gray-50 rounded px-2 py-1 w-24 border border-gray-200"
-                />
-              </div>
-            </div>
-
             {/* Max Bid Result */}
             {market2 > 0 && (
               <div className="bg-blue-50 border border-blue-100 rounded-2xl p-6 text-center">
