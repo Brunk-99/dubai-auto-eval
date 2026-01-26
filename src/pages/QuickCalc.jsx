@@ -207,47 +207,49 @@ export default function QuickCalc() {
               </div>
             </div>
 
-            {/* Kosten Breakdown */}
-            <div className="bg-white rounded-2xl p-5 shadow-sm space-y-3">
-              <div className="flex justify-between text-gray-400">
-                <span>Kaufpreis</span>
-                <span className="text-gray-900 tabular-nums">{formatCurrency(dealerEUR)}</span>
-              </div>
-              <div className="flex justify-between text-gray-400">
-                <span>Zoll (10%)</span>
-                <span className="text-gray-900 tabular-nums">{formatCurrency(duty1)}</span>
-              </div>
-              <div className="flex justify-between text-gray-400">
-                <span>EUSt (19%)</span>
-                <span className="text-gray-900 tabular-nums">{formatCurrency(vat1)}</span>
-              </div>
-              <div className="flex justify-between text-gray-400">
-                <span>Transport</span>
-                <span className="text-gray-900 tabular-nums">{formatCurrency(transport)}</span>
-              </div>
-              <div className="flex justify-between text-gray-400">
-                <span>TÜV/Zulassung</span>
-                <span className="text-gray-900 tabular-nums">{formatCurrency(tuv)}</span>
-              </div>
-              <div className="flex justify-between text-gray-400">
-                <span>Sonstiges</span>
-                <span className="text-gray-900 tabular-nums">{formatCurrency(misc)}</span>
-              </div>
-              <div className="border-t border-gray-100 pt-3 flex justify-between">
-                <span className="text-gray-600 font-medium">Gesamt</span>
-                <span className="text-gray-900 font-semibold tabular-nums">{formatCurrency(totalCost1)}</span>
-              </div>
-            </div>
-
-            {/* Marge */}
+            {/* Kosten Breakdown - nur anzeigen wenn Werte eingegeben */}
             {dealerAED > 0 && market1 > 0 && (
-              <div className={`${marginColors.bg} ${marginColors.border} border rounded-2xl p-6 text-center`}>
-                <div className={`${marginColors.text} text-sm uppercase tracking-wider`}>Deine Marge</div>
-                <div className={`text-4xl font-bold mt-2 tabular-nums ${marginColors.text}`}>
-                  {formatCurrency(margin1)}
+              <>
+                <div className="bg-white rounded-2xl p-5 shadow-sm space-y-3">
+                  <div className="flex justify-between text-gray-400">
+                    <span>Kaufpreis</span>
+                    <span className="text-gray-900 tabular-nums">{formatCurrency(dealerEUR)}</span>
+                  </div>
+                  <div className="flex justify-between text-gray-400">
+                    <span>Zoll (10%)</span>
+                    <span className="text-gray-900 tabular-nums">{formatCurrency(duty1)}</span>
+                  </div>
+                  <div className="flex justify-between text-gray-400">
+                    <span>EUSt (19%)</span>
+                    <span className="text-gray-900 tabular-nums">{formatCurrency(vat1)}</span>
+                  </div>
+                  <div className="flex justify-between text-gray-400">
+                    <span>Transport</span>
+                    <span className="text-gray-900 tabular-nums">{formatCurrency(transport)}</span>
+                  </div>
+                  <div className="flex justify-between text-gray-400">
+                    <span>TÜV/Zulassung</span>
+                    <span className="text-gray-900 tabular-nums">{formatCurrency(tuv)}</span>
+                  </div>
+                  <div className="flex justify-between text-gray-400">
+                    <span>Sonstiges</span>
+                    <span className="text-gray-900 tabular-nums">{formatCurrency(misc)}</span>
+                  </div>
+                  <div className="border-t border-gray-100 pt-3 flex justify-between">
+                    <span className="text-gray-600 font-medium">Gesamt</span>
+                    <span className="text-gray-900 font-semibold tabular-nums">{formatCurrency(totalCost1)}</span>
+                  </div>
                 </div>
-                <div className={`text-xl mt-1 ${marginColors.text}`}>{marginPct1.toFixed(1)}%</div>
-              </div>
+
+                {/* Marge */}
+                <div className={`${marginColors.bg} ${marginColors.border} border rounded-2xl p-6 text-center`}>
+                  <div className={`${marginColors.text} text-sm uppercase tracking-wider`}>Deine Marge</div>
+                  <div className={`text-4xl font-bold mt-2 tabular-nums ${marginColors.text}`}>
+                    {formatCurrency(margin1)}
+                  </div>
+                  <div className={`text-xl mt-1 ${marginColors.text}`}>{marginPct1.toFixed(1)}%</div>
+                </div>
+              </>
             )}
           </TabsContent>
 
