@@ -7,6 +7,7 @@ import VehicleDetails from './pages/VehicleDetails';
 import VehicleForm from './pages/VehicleForm';
 import Settings from './pages/Settings';
 import QuickCalc from './pages/QuickCalc';
+import DesignTest from './pages/DesignTest';
 import { isAuthenticated } from './lib/auth';
 import { migrateVehicles } from './lib/storage';
 import { getExchangeRate } from './lib/exchangeRate';
@@ -92,6 +93,17 @@ function App() {
           <RequireAuth>
             <RequireAdmin>
               <QuickCalc />
+            </RequireAdmin>
+          </RequireAuth>
+        }
+      />
+
+      <Route
+        path="/design-test"
+        element={
+          <RequireAuth>
+            <RequireAdmin>
+              <DesignTest />
             </RequireAdmin>
           </RequireAuth>
         }

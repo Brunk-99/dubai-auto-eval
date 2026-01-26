@@ -137,33 +137,72 @@ export default function QuickCalc() {
 
           {/* ========== SCHNELLRECHNER TAB ========== */}
           <TabsContent value="schnellrechner" className="mt-4 space-y-4">
-            {/* Haupt-Eingaben */}
+            {/* Haupt-Eingaben - Design 4: Zentriert mit inneren Boxen */}
             <div className="bg-white rounded-2xl p-5 shadow-sm">
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <div className="text-xs text-gray-400 uppercase tracking-wider mb-2">Einkauf AED</div>
-                  <input
-                    type="text"
-                    inputMode="decimal"
-                    value={dealerPriceAED}
-                    onChange={(e) => setDealerPriceAED(e.target.value)}
-                    placeholder="0"
-                    className="text-3xl font-light text-gray-900 tabular-nums w-full bg-transparent border-none outline-none placeholder-gray-300"
-                  />
+                  <div className="text-xs text-gray-400 uppercase tracking-wider text-center mb-2">Einkauf AED</div>
+                  <div className="bg-gray-50 rounded-xl p-4 relative">
+                    {dealerAED > 0 ? (
+                      <div
+                        className="text-2xl font-bold text-gray-900 tabular-nums text-center cursor-text"
+                        onClick={() => document.getElementById('schnell-aed').focus()}
+                      >
+                        {new Intl.NumberFormat('de-DE').format(dealerAED)}
+                      </div>
+                    ) : (
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        value={dealerPriceAED}
+                        onChange={(e) => setDealerPriceAED(e.target.value)}
+                        placeholder="0"
+                        className="text-2xl font-bold text-gray-900 tabular-nums w-full bg-transparent border-none outline-none placeholder-gray-300 text-center"
+                      />
+                    )}
+                    <input
+                      id="schnell-aed"
+                      type="text"
+                      inputMode="decimal"
+                      value={dealerPriceAED}
+                      onChange={(e) => setDealerPriceAED(e.target.value)}
+                      className="absolute inset-0 opacity-0 cursor-text"
+                    />
+                  </div>
                   {dealerAED > 0 && (
-                    <div className="text-gray-400 text-sm mt-1">≈ {formatCurrency(dealerEUR)}</div>
+                    <div className="text-gray-400 text-xs text-center mt-2">≈ {formatCurrency(dealerEUR)}</div>
                   )}
                 </div>
+
                 <div>
-                  <div className="text-xs text-gray-400 uppercase tracking-wider mb-2">Verkauf EUR</div>
-                  <input
-                    type="text"
-                    inputMode="decimal"
-                    value={marketPriceDE1}
-                    onChange={(e) => setMarketPriceDE1(e.target.value)}
-                    placeholder="0"
-                    className="text-3xl font-light text-gray-900 tabular-nums w-full bg-transparent border-none outline-none placeholder-gray-300"
-                  />
+                  <div className="text-xs text-gray-400 uppercase tracking-wider text-center mb-2">Verkauf EUR</div>
+                  <div className="bg-gray-50 rounded-xl p-4 relative">
+                    {market1 > 0 ? (
+                      <div
+                        className="text-2xl font-bold text-gray-900 tabular-nums text-center cursor-text"
+                        onClick={() => document.getElementById('schnell-eur').focus()}
+                      >
+                        {new Intl.NumberFormat('de-DE').format(market1)}
+                      </div>
+                    ) : (
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        value={marketPriceDE1}
+                        onChange={(e) => setMarketPriceDE1(e.target.value)}
+                        placeholder="0"
+                        className="text-2xl font-bold text-gray-900 tabular-nums w-full bg-transparent border-none outline-none placeholder-gray-300 text-center"
+                      />
+                    )}
+                    <input
+                      id="schnell-eur"
+                      type="text"
+                      inputMode="decimal"
+                      value={marketPriceDE1}
+                      onChange={(e) => setMarketPriceDE1(e.target.value)}
+                      className="absolute inset-0 opacity-0 cursor-text"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -182,35 +221,17 @@ export default function QuickCalc() {
                 <span>EUSt (19%)</span>
                 <span className="text-gray-900 tabular-nums">{formatCurrency(vat1)}</span>
               </div>
-              <div className="flex justify-between text-gray-400 items-center">
+              <div className="flex justify-between text-gray-400">
                 <span>Transport</span>
-                <input
-                  type="text"
-                  inputMode="decimal"
-                  value={transportCost}
-                  onChange={(e) => setTransportCost(e.target.value)}
-                  className="text-gray-900 tabular-nums text-right bg-gray-50 rounded px-2 py-1 w-24 border border-gray-200"
-                />
+                <span className="text-gray-900 tabular-nums">{formatCurrency(transport)}</span>
               </div>
-              <div className="flex justify-between text-gray-400 items-center">
+              <div className="flex justify-between text-gray-400">
                 <span>TÜV/Zulassung</span>
-                <input
-                  type="text"
-                  inputMode="decimal"
-                  value={tuvCost}
-                  onChange={(e) => setTuvCost(e.target.value)}
-                  className="text-gray-900 tabular-nums text-right bg-gray-50 rounded px-2 py-1 w-24 border border-gray-200"
-                />
+                <span className="text-gray-900 tabular-nums">{formatCurrency(tuv)}</span>
               </div>
-              <div className="flex justify-between text-gray-400 items-center">
+              <div className="flex justify-between text-gray-400">
                 <span>Sonstiges</span>
-                <input
-                  type="text"
-                  inputMode="decimal"
-                  value={miscCost}
-                  onChange={(e) => setMiscCost(e.target.value)}
-                  className="text-gray-900 tabular-nums text-right bg-gray-50 rounded px-2 py-1 w-24 border border-gray-200"
-                />
+                <span className="text-gray-900 tabular-nums">{formatCurrency(misc)}</span>
               </div>
               <div className="border-t border-gray-100 pt-3 flex justify-between">
                 <span className="text-gray-600 font-medium">Gesamt</span>
@@ -232,18 +253,39 @@ export default function QuickCalc() {
 
           {/* ========== AUKTION TAB ========== */}
           <TabsContent value="auktion" className="mt-4 space-y-4">
-            {/* Haupt-Eingabe */}
+            {/* Haupt-Eingabe - Design 4: Zentriert mit innerem Rahmen */}
             <div className="bg-white rounded-2xl p-5 shadow-sm">
-              <div className="text-xs text-gray-400 uppercase tracking-wider mb-2">Verkaufspreis DE</div>
-              <input
-                type="text"
-                inputMode="decimal"
-                value={marketPriceDE2}
-                onChange={(e) => setMarketPriceDE2(e.target.value)}
-                placeholder="0"
-                className="text-3xl font-light text-gray-900 tabular-nums w-full bg-transparent border-none outline-none placeholder-gray-300"
-              />
-              <p className="text-xs text-gray-400 mt-2">
+              <div className="text-xs text-gray-400 uppercase tracking-wider text-center mb-3">Verkaufspreis DE</div>
+
+              <div className="bg-gray-50 rounded-xl p-6 relative">
+                {market2 > 0 ? (
+                  <div
+                    className="text-4xl font-bold text-gray-900 tabular-nums text-center cursor-text"
+                    onClick={() => document.getElementById('auction-input').focus()}
+                  >
+                    {formatCurrency(market2)}
+                  </div>
+                ) : (
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={marketPriceDE2}
+                    onChange={(e) => setMarketPriceDE2(e.target.value)}
+                    placeholder="0 €"
+                    className="text-4xl font-bold text-gray-900 tabular-nums w-full bg-transparent border-none outline-none placeholder-gray-300 text-center"
+                  />
+                )}
+                <input
+                  id="auction-input"
+                  type="text"
+                  inputMode="decimal"
+                  value={marketPriceDE2}
+                  onChange={(e) => setMarketPriceDE2(e.target.value)}
+                  className="absolute inset-0 opacity-0 cursor-text"
+                />
+              </div>
+
+              <p className="text-xs text-gray-400 text-center mt-3">
                 Günstigstes vergleichbares Fahrzeug auf mobile.de
               </p>
             </div>
