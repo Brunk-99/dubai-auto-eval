@@ -878,6 +878,37 @@ export default function VehicleForm() {
               onChange={(e) => handleNumberChange('marketPriceDE', e.target.value)}
               suffix="€"
             />
+
+            {/* Mobile.de Search Button */}
+            {(vehicle.brand || vehicle.model) && (
+              <a
+                href={(() => {
+                  const searchParams = new URLSearchParams();
+                  const title = `${vehicle.brand || ''} ${vehicle.model || ''}`.trim();
+                  if (title) searchParams.set('s', title);
+                  if (vehicle.year) {
+                    searchParams.set('fr', String(Number(vehicle.year) - 1));
+                    searchParams.set('to', String(Number(vehicle.year) + 1));
+                  }
+                  if (vehicle.mileage) {
+                    const maxMileage = Math.ceil(Number(vehicle.mileage) * 1.2 / 10000) * 10000;
+                    searchParams.set('ml', String(maxMileage));
+                  }
+                  return `https://suchen.mobile.de/fahrzeuge/search.html?${searchParams.toString()}`;
+                })()}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 w-full py-3 px-4 bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-white font-medium rounded-xl transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <span>Auf mobile.de suchen</span>
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+              </a>
+            )}
           </div>
         </Card>
 
