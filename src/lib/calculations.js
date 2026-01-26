@@ -1,7 +1,6 @@
 // Cost calculation logic for German import
 
-// Exchange rate AED to EUR (1 EUR = 4.00 AED)
-export const EUR_AED_RATE = 4.00;
+import { getCachedExchangeRate, aedToEur as convertAedToEur, eurToAed as convertEurToAed } from './exchangeRate';
 
 // Default target profit percentage (35%)
 const DEFAULT_TARGET_PROFIT_PCT = 35;
@@ -11,14 +10,18 @@ function roundDownToNearest50(value) {
   return Math.floor(value / 50) * 50;
 }
 
-// Convert AED to EUR
-export function aedToEur(aedAmount) {
-  return aedAmount / EUR_AED_RATE;
+// Re-export exchange functions for backwards compatibility
+export function aedToEur(aedAmount, rate = null) {
+  return convertAedToEur(aedAmount, rate);
 }
 
-// Convert EUR to AED
-export function eurToAed(eurAmount) {
-  return eurAmount * EUR_AED_RATE;
+export function eurToAed(eurAmount, rate = null) {
+  return convertEurToAed(eurAmount, rate);
+}
+
+// Get current rate (for display purposes)
+export function getCurrentRate() {
+  return getCachedExchangeRate();
 }
 
 // Get repair estimate base (mechanic avg or AI estimate)
@@ -148,7 +151,7 @@ export function calculateCosts(vehicle, settings = {}) {
     targetProfit,
     targetProfitPct,
     safetyDeduction,
-    eurAedRate: EUR_AED_RATE,
+    eurAedRate: getCachedExchangeRate(),
   };
 }
 

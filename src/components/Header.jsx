@@ -1,8 +1,10 @@
 import { useNavigate } from 'react-router-dom';
+import AdminMenu from './AdminMenu';
 
 export default function Header({
   title,
   showBack = false,
+  showMenu = false,
   backTo,
   rightAction,
   className = '',
@@ -21,6 +23,7 @@ export default function Header({
     <header className={`sticky top-0 z-40 bg-white/95 backdrop-blur-sm border-b border-gray-100 safe-area-top ${className}`}>
       <div className="flex items-center justify-between h-14 px-4">
         <div className="flex items-center gap-3 min-w-0 flex-1">
+          {showMenu && <AdminMenu />}
           {showBack && (
             <button
               onClick={handleBack}

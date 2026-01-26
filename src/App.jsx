@@ -6,17 +6,21 @@ import Dashboard from './pages/Dashboard';
 import VehicleDetails from './pages/VehicleDetails';
 import VehicleForm from './pages/VehicleForm';
 import Settings from './pages/Settings';
+import QuickCalc from './pages/QuickCalc';
 import { isAuthenticated } from './lib/auth';
 import { migrateVehicles } from './lib/storage';
+import { getExchangeRate } from './lib/exchangeRate';
 
 function App() {
   // useLocation forces re-render on navigation
   const location = useLocation();
   const authed = isAuthenticated();
 
-  // Run migration on app start
+  // Run migration and fetch exchange rate on app start
   useEffect(() => {
     migrateVehicles();
+    // Pre-fetch exchange rate so it's cached for calculations
+    getExchangeRate();
   }, []);
 
   return (
@@ -77,6 +81,17 @@ function App() {
           <RequireAuth>
             <RequireAdmin>
               <Settings />
+            </RequireAdmin>
+          </RequireAuth>
+        }
+      />
+
+      <Route
+        path="/quick-calc"
+        element={
+          <RequireAuth>
+            <RequireAdmin>
+              <QuickCalc />
             </RequireAdmin>
           </RequireAuth>
         }
