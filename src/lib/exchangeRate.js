@@ -1,5 +1,5 @@
 // Exchange rate service for AED to EUR conversion
-// Uses frankfurter.app (free, no API key required)
+// Uses open.er-api.com (free, no API key required, supports AED)
 
 const CACHE_KEY = 'exchange_rate_cache';
 const CACHE_DURATION = 4 * 60 * 60 * 1000; // 4 hours in ms
@@ -42,14 +42,19 @@ function setCachedRate(rate) {
 // Fetch current exchange rate from API
 async function fetchRate() {
   try {
-    // frankfurter.app is free and doesn't require API key
-    const response = await fetch('https://api.frankfurter.app/latest?from=EUR&to=AED');
+    // open.er-api.com is free, no API key required, and supports AED
+    const response = await fetch('https://open.er-api.com/v6/latest/EUR');
 
     if (!response.ok) {
       throw new Error(`API error: ${response.status}`);
     }
 
     const data = await response.json();
+
+    if (data.result !== 'success') {
+      throw new Error('API returned error');
+    }
+
     const rate = data.rates?.AED;
 
     if (typeof rate !== 'number' || rate <= 0) {
