@@ -73,12 +73,12 @@ export default function AdminMenu() {
       {/* Hamburger Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="p-2 -ml-2 rounded-lg hover:bg-gray-100 transition-colors"
+        className="p-2 -ml-2 rounded-lg hover:bg-white/20 transition-colors"
         aria-label="Menü öffnen"
         aria-expanded={isOpen}
       >
         <svg
-          className="w-6 h-6 text-gray-700"
+          className="w-6 h-6 text-white"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"

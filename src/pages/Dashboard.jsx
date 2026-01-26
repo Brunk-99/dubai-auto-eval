@@ -154,14 +154,14 @@ export default function Dashboard() {
   const sortOptions = userIsAdmin ? SORT_OPTIONS_ADMIN : SORT_OPTIONS_MECHANIC;
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24">
+    <div className="min-h-screen bg-gradient-to-br from-sky-100 via-blue-100 to-cyan-100 pb-24">
       <Header
         title="Fahrzeuge"
         showMenu={userIsAdmin}
         rightAction={
           <button
             onClick={handleLogout}
-            className="text-sm text-gray-500 hover:text-gray-700 active:text-gray-900 px-2 py-1"
+            className="text-sm text-white/80 hover:text-white active:text-white/60 px-2 py-1"
           >
             Abmelden
           </button>
@@ -169,14 +169,14 @@ export default function Dashboard() {
       />
 
       {/* User info bar */}
-      <div className="px-4 py-2 bg-gray-100 border-b border-gray-200">
+      <div className="px-4 py-2 bg-white/60 backdrop-blur-sm border-b border-white/50">
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 bg-blue-100 rounded-full flex items-center justify-center">
-            <span className="text-blue-600 font-bold text-sm">{currentUser?.name?.charAt(0)}</span>
+          <div className="w-7 h-7 bg-blue-500 rounded-full flex items-center justify-center">
+            <span className="text-white font-bold text-sm">{currentUser?.name?.charAt(0)}</span>
           </div>
           <div>
             <span className="text-sm font-medium text-gray-700">{currentUser?.name}</span>
-            <span className="text-xs text-gray-400 ml-2">
+            <span className="text-xs text-blue-500 ml-2">
               {userIsAdmin ? 'Admin' : 'Mechaniker'}
             </span>
           </div>
@@ -184,7 +184,7 @@ export default function Dashboard() {
       </div>
 
       {/* Filters */}
-      <div className="p-4 space-y-3 bg-white border-b border-gray-100">
+      <div className="p-4 space-y-3 bg-white/80 backdrop-blur-sm border-b border-white/50">
         <Input
           placeholder="Suchen (Titel, VIN, Farbe...)"
           value={search}
@@ -280,7 +280,7 @@ function StatsBar({ vehicles, settings }) {
   }, [vehicles, settings]);
 
   return (
-    <div className="px-4 py-3 bg-white border-b border-gray-100">
+    <div className="px-4 py-3 bg-white/80 backdrop-blur-sm border-b border-white/50">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <svg className="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">

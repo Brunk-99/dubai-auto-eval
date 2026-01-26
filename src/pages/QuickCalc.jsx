@@ -114,7 +114,7 @@ export default function QuickCalc() {
   const marginColors = getMarginColor(margin1, marginPct1);
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-8">
+    <div className="min-h-screen bg-gradient-to-br from-sky-100 via-blue-100 to-cyan-100 pb-8">
       <Header
         title="Rechner"
         showBack

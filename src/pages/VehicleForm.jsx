@@ -596,7 +596,7 @@ export default function VehicleForm() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-32">
+    <div className="min-h-screen bg-gradient-to-br from-sky-100 via-blue-100 to-cyan-100 pb-32">
       <Header
         title={isNew ? 'Neues Fahrzeug' : 'Bearbeiten'}
         showBack

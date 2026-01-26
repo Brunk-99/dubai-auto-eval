@@ -73,7 +73,7 @@ export default function CurrencyConverter() {
   const toCurrency = isAedToEur ? 'EUR' : 'AED';
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-8">
+    <div className="min-h-screen bg-gradient-to-br from-sky-100 via-blue-100 to-cyan-100 pb-8">
       <Header
         title="Währungsrechner"
         showBack
