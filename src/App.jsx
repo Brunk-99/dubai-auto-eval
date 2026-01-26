@@ -9,6 +9,7 @@ import Settings from './pages/Settings';
 import QuickCalc from './pages/QuickCalc';
 import CurrencyConverter from './pages/CurrencyConverter';
 import DesignTest from './pages/DesignTest';
+import LoginDesignTest from './pages/LoginDesignTest';
 import { isAuthenticated } from './lib/auth';
 import { migrateVehicles } from './lib/storage';
 import { getExchangeRate } from './lib/exchangeRate';
@@ -119,6 +120,11 @@ function App() {
             </RequireAdmin>
           </RequireAuth>
         }
+      />
+
+      <Route
+        path="/login-test"
+        element={<LoginDesignTest />}
       />
 
       {/* Catch all */}

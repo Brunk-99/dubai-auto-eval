@@ -1,5 +1,6 @@
 // Exchange rate service for AED to EUR conversion
-// Uses open.er-api.com (free, no API key required, supports AED)
+// Uses fawazahmed0/currency-api (free, no API key, high precision, CDN-backed)
+// Fallback to open.er-api.com if primary fails
 
 const CACHE_KEY = 'exchange_rate_cache';
 const CACHE_DURATION = 4 * 60 * 60 * 1000; // 4 hours in ms
@@ -39,32 +40,65 @@ function setCachedRate(rate) {
   }
 }
 
-// Fetch current exchange rate from API
+// Fetch from primary API (fawazahmed0 - high precision, CDN-backed)
+async function fetchFromPrimaryAPI() {
+  const response = await fetch('https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/eur.json');
+
+  if (!response.ok) {
+    throw new Error(`Primary API error: ${response.status}`);
+  }
+
+  const data = await response.json();
+  const rate = data.eur?.aed;
+
+  if (typeof rate !== 'number' || rate <= 0) {
+    throw new Error('Invalid rate from primary API');
+  }
+
+  return rate;
+}
+
+// Fetch from fallback API (open.er-api.com)
+async function fetchFromFallbackAPI() {
+  const response = await fetch('https://open.er-api.com/v6/latest/EUR');
+
+  if (!response.ok) {
+    throw new Error(`Fallback API error: ${response.status}`);
+  }
+
+  const data = await response.json();
+
+  if (data.result !== 'success') {
+    throw new Error('Fallback API returned error');
+  }
+
+  const rate = data.rates?.AED;
+
+  if (typeof rate !== 'number' || rate <= 0) {
+    throw new Error('Invalid rate from fallback API');
+  }
+
+  return rate;
+}
+
+// Fetch current exchange rate from API (with fallback)
 async function fetchRate() {
+  // Try primary API first
   try {
-    // open.er-api.com is free, no API key required, and supports AED
-    const response = await fetch('https://open.er-api.com/v6/latest/EUR');
-
-    if (!response.ok) {
-      throw new Error(`API error: ${response.status}`);
-    }
-
-    const data = await response.json();
-
-    if (data.result !== 'success') {
-      throw new Error('API returned error');
-    }
-
-    const rate = data.rates?.AED;
-
-    if (typeof rate !== 'number' || rate <= 0) {
-      throw new Error('Invalid rate received');
-    }
-
-    console.log('[ExchangeRate] Fetched rate: 1 EUR =', rate, 'AED');
+    const rate = await fetchFromPrimaryAPI();
+    console.log('[ExchangeRate] Fetched from primary API: 1 EUR =', rate, 'AED');
     return rate;
-  } catch (error) {
-    console.error('[ExchangeRate] Fetch error:', error);
+  } catch (primaryError) {
+    console.warn('[ExchangeRate] Primary API failed:', primaryError.message);
+  }
+
+  // Fallback to secondary API
+  try {
+    const rate = await fetchFromFallbackAPI();
+    console.log('[ExchangeRate] Fetched from fallback API: 1 EUR =', rate, 'AED');
+    return rate;
+  } catch (fallbackError) {
+    console.error('[ExchangeRate] All APIs failed:', fallbackError.message);
     return null;
   }
 }
