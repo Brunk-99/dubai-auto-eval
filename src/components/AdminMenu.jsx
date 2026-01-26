@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { isAdmin } from '../lib/auth';
+import { useTheme } from '../lib/theme.jsx';
 
 const menuItems = [
   { path: '/dashboard', label: 'Dashboard', icon: 'home' },
@@ -38,6 +39,7 @@ export default function AdminMenu() {
   const menuRef = useRef(null);
   const navigate = useNavigate();
   const location = useLocation();
+  const { theme, themeId } = useTheme();
 
   // Only show for admins
   if (!isAdmin()) {
@@ -68,17 +70,23 @@ export default function AdminMenu() {
     setIsOpen(false);
   };
 
+  // Dropdown styles based on theme
+  const dropdownBg = themeId === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100';
+  const itemHover = themeId === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-50';
+  const itemText = themeId === 'dark' ? 'text-gray-200' : 'text-gray-700';
+  const itemIconInactive = themeId === 'dark' ? 'text-gray-400' : 'text-gray-400';
+
   return (
     <div ref={menuRef} className="relative">
       {/* Hamburger Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="p-2 -ml-2 rounded-lg hover:bg-white/20 transition-colors"
+        className={`p-2 -ml-2 rounded-lg transition-colors ${theme.headerHover}`}
         aria-label="Menü öffnen"
         aria-expanded={isOpen}
       >
         <svg
-          className="w-6 h-6 text-white"
+          className={`w-6 h-6 ${theme.headerIcon}`}
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -94,7 +102,7 @@ export default function AdminMenu() {
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className="absolute left-0 top-full mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50">
+        <div className={`absolute left-0 top-full mt-2 w-56 rounded-xl shadow-lg border py-2 z-50 ${dropdownBg}`}>
           {menuItems.map((item) => {
             const isActive = location.pathname === item.path;
             return (
@@ -105,11 +113,11 @@ export default function AdminMenu() {
                   w-full flex items-center gap-3 px-4 py-3 text-left transition-colors
                   ${isActive
                     ? 'bg-blue-50 text-blue-600'
-                    : 'text-gray-700 hover:bg-gray-50'
+                    : `${itemText} ${itemHover}`
                   }
                 `}
               >
-                <span className={isActive ? 'text-blue-600' : 'text-gray-400'}>
+                <span className={isActive ? 'text-blue-600' : itemIconInactive}>
                   {icons[item.icon]}
                 </span>
                 <span className="font-medium">{item.label}</span>

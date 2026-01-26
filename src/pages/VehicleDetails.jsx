@@ -16,6 +16,7 @@ import {
   parseCurrencyInput,
 } from '../lib/formatters';
 import { isAdmin, isMechanic, getCurrentUser } from '../lib/auth';
+import { useTheme } from '../lib/theme.jsx';
 import Header from '../components/Header';
 import Card from '../components/Card';
 import Badge from '../components/Badge';
@@ -49,6 +50,7 @@ function generateUUID() {
 export default function VehicleDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { theme, themeId } = useTheme();
   const [vehicle, setVehicle] = useState(null);
   const [loading, setLoading] = useState(true);
   const [settings, setSettings] = useState({});
@@ -102,8 +104,27 @@ export default function VehicleDetails() {
   const showCostsTab = userIsAdmin;
   const showAllReviews = userIsAdmin;
 
+  // Theme-aware styles
+  const editButtonStyle = themeId === 'modern'
+    ? 'hover:bg-white/20 active:bg-white/30'
+    : themeId === 'dark'
+      ? 'hover:bg-gray-700 active:bg-gray-600'
+      : 'hover:bg-gray-100 active:bg-gray-200';
+
+  const statsBarBg = themeId === 'dark'
+    ? 'bg-gray-800 border-gray-700'
+    : themeId === 'modern'
+      ? 'bg-white/80 backdrop-blur-sm border-white/50'
+      : 'bg-white border-gray-100';
+
+  const tabsBarBg = themeId === 'dark'
+    ? 'bg-gray-800'
+    : themeId === 'modern'
+      ? 'bg-white/60 backdrop-blur-sm'
+      : 'bg-white';
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-sky-100 via-blue-100 to-cyan-100 pb-8">
+    <div className={`min-h-screen ${theme.pageBg} pb-8`}>
       <Header
         title={vehicle.title || 'Details'}
         showBack
@@ -112,9 +133,9 @@ export default function VehicleDetails() {
           userIsAdmin && (
             <button
               onClick={() => navigate(`/vehicle/${id}/edit`)}
-              className="p-2 -mr-2 rounded-full hover:bg-white/20 active:bg-white/30 transition-colors"
+              className={`p-2 -mr-2 rounded-full transition-colors ${editButtonStyle}`}
             >
-              <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className={`w-5 h-5 ${theme.headerIcon}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
               </svg>
             </button>
@@ -123,32 +144,32 @@ export default function VehicleDetails() {
       />
 
       {/* Quick Stats Bar - Different for Admin vs Mechanic */}
-      <div className="bg-white/80 backdrop-blur-sm border-b border-white/50 px-4 py-3">
+      <div className={`border-b px-4 py-3 ${statsBarBg}`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Ampel status={ampel} size="lg" showLabel />
           </div>
           {userIsAdmin ? (
             <div className="text-right">
-              <p className="text-xs text-gray-500 mb-1">Max. Gebot</p>
-              <p className="text-lg font-bold text-blue-600">
+              <p className={`text-xs ${theme.textSecondary} mb-1`}>Max. Gebot</p>
+              <p className={`text-lg font-bold ${theme.accent}`}>
                 {formatCurrency(costs.maxBidAED, 'AED')}
               </p>
-              <p className="text-xs text-gray-400">
+              <p className={`text-xs ${theme.textMuted}`}>
                 ({formatCurrency(costs.maxBid)})
               </p>
             </div>
           ) : (
             <div className="text-right">
-              <p className="text-xs text-gray-500">Deine Bewertung zählt</p>
+              <p className={`text-xs ${theme.textSecondary}`}>Deine Bewertung zählt</p>
             </div>
           )}
         </div>
 
         {/* Admin: Show profit below */}
         {userIsAdmin && (
-          <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-100">
-            <span className="text-sm text-gray-500">Profit bei aktuellem Gebot</span>
+          <div className={`flex items-center justify-between mt-2 pt-2 border-t ${themeId === 'dark' ? 'border-gray-700' : 'border-gray-100'}`}>
+            <span className={`text-sm ${theme.textSecondary}`}>Profit bei aktuellem Gebot</span>
             <span className={`font-bold ${costs.profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
               {formatCurrency(costs.profit)}
             </span>
@@ -157,7 +178,7 @@ export default function VehicleDetails() {
       </div>
 
       {/* Tabs - Different for Admin vs Mechanic */}
-      <div className="sticky top-14 z-30 bg-white/60 backdrop-blur-sm px-4 py-3">
+      <div className={`sticky top-14 z-30 px-4 py-3 ${tabsBarBg}`}>
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList>
             <TabsTrigger value="info">Info</TabsTrigger>

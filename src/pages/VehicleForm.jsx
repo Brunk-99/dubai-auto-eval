@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { getVehicle, saveVehicle, deleteVehicle, createEmptyVehicle, getCostDefaults } from '../lib/storage';
 import { parseCurrencyInput } from '../lib/formatters';
 import { isAdmin, getCurrentUser } from '../lib/auth';
+import { useTheme } from '../lib/theme.jsx';
 import { analyzeVehicleDamage } from '../lib/damageAnalysis';
 import { compressImage, isValidImageType } from '../lib/imageUtils';
 import Header from '../components/Header';
@@ -251,6 +252,7 @@ export default function VehicleForm() {
   const isNew = !id || id === 'new';
   const navigate = useNavigate();
   const currentUser = getCurrentUser();
+  const { theme, themeId } = useTheme();
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -595,8 +597,14 @@ export default function VehicleForm() {
     );
   }
 
+  // Theme-aware styles
+  const draftBarBg = themeId === 'dark'
+    ? 'bg-blue-900/30 border-blue-800'
+    : 'bg-blue-50 border-blue-100';
+  const draftText = themeId === 'dark' ? 'text-blue-400' : 'text-blue-600';
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-sky-100 via-blue-100 to-cyan-100 pb-32">
+    <div className={`min-h-screen ${theme.pageBg} pb-32`}>
       <Header
         title={isNew ? 'Neues Fahrzeug' : 'Bearbeiten'}
         showBack
@@ -605,15 +613,15 @@ export default function VehicleForm() {
 
       {/* Draft indicator */}
       {isNew && draftLoaded && (vehicle.brand || vehicle.title) && (
-        <div className="px-4 py-2 bg-blue-50 border-b border-blue-100 flex items-center justify-between">
-          <span className="text-xs text-blue-600">Entwurf wird automatisch gespeichert</span>
+        <div className={`px-4 py-2 border-b flex items-center justify-between ${draftBarBg}`}>
+          <span className={`text-xs ${draftText}`}>Entwurf wird automatisch gespeichert</span>
           <button
             onClick={() => {
               clearDraft();
               const defaults = costDefaults;
               setVehicle(createEmptyVehicle(defaults, currentUser));
             }}
-            className="text-xs text-blue-600 font-medium"
+            className={`text-xs ${draftText} font-medium`}
           >
             Verwerfen
           </button>
@@ -623,7 +631,7 @@ export default function VehicleForm() {
       <div className="p-4 space-y-4">
         {/* Basic Info */}
         <Card>
-          <h2 className="font-semibold text-gray-900 mb-4">Grunddaten</h2>
+          <h2 className={`font-semibold ${theme.textPrimary} mb-4`}>Grunddaten</h2>
           <div className="space-y-3">
             {/* Marke */}
             {showCustomBrand ? (
@@ -839,7 +847,7 @@ export default function VehicleForm() {
 
         {/* Pricing */}
         <Card>
-          <h2 className="font-semibold text-gray-900 mb-4">Preise</h2>
+          <h2 className="font-semibold ${theme.textPrimary} mb-4">Preise</h2>
           <div className="space-y-3">
             <Input
               label="Startgebot (AED) *"
@@ -875,7 +883,7 @@ export default function VehicleForm() {
 
         {/* Photos Section */}
         <Card>
-          <h2 className="font-semibold text-gray-900 mb-4">
+          <h2 className="font-semibold ${theme.textPrimary} mb-4">
             Schadenfotos {vehicle.photos?.length > 0 && `(${vehicle.photos.length})`}
           </h2>
 
@@ -947,7 +955,7 @@ export default function VehicleForm() {
         {/* Cost Inputs (Collapsed for new vehicles) */}
         {!isNew && (
           <Card>
-            <h2 className="font-semibold text-gray-900 mb-4">Kostenparameter</h2>
+            <h2 className="font-semibold ${theme.textPrimary} mb-4">Kostenparameter</h2>
             <div className="space-y-3">
               <Input
                 label="Transport"

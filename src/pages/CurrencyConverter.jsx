@@ -2,11 +2,13 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { isAdmin } from '../lib/auth';
 import { getExchangeRate, aedToEur, eurToAed } from '../lib/exchangeRate';
+import { useTheme } from '../lib/theme.jsx';
 import Header from '../components/Header';
 import LoadingSpinner from '../components/LoadingSpinner';
 
 export default function CurrencyConverter() {
   const navigate = useNavigate();
+  const { theme, themeId } = useTheme();
   const [loading, setLoading] = useState(true);
   const [exchangeRate, setExchangeRate] = useState(null);
   const [rateInfo, setRateInfo] = useState(null);
@@ -72,8 +74,19 @@ export default function CurrencyConverter() {
   const fromCurrency = isAedToEur ? 'AED' : 'EUR';
   const toCurrency = isAedToEur ? 'EUR' : 'AED';
 
+  // Theme-aware styles
+  const cardBg = themeId === 'dark' ? 'bg-gray-800' : 'bg-white';
+  const inputBg = themeId === 'dark' ? 'bg-gray-700' : 'bg-gray-50';
+  const toggleBg = themeId === 'dark'
+    ? 'bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700'
+    : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50';
+  const resultBg = themeId === 'dark'
+    ? 'bg-blue-900/30 border-blue-800'
+    : 'bg-blue-50 border-blue-100';
+  const resultText = themeId === 'dark' ? 'text-blue-400' : 'text-blue-600';
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-sky-100 via-blue-100 to-cyan-100 pb-8">
+    <div className={`min-h-screen ${theme.pageBg} pb-8`}>
       <Header
         title="Währungsrechner"
         showBack
@@ -82,7 +95,7 @@ export default function CurrencyConverter() {
 
       <div className="p-4 space-y-4">
         {/* Kurs-Banner */}
-        <div className="text-center py-1 text-gray-400 text-sm">
+        <div className={`text-center py-1 ${theme.textMuted} text-sm`}>
           1 EUR = {exchangeRate?.toFixed(4)} AED
           {rateInfo?.isFallback && rateInfo?.isLastKnown && (
             <span className="text-orange-500 ml-2">(letzter Kurs)</span>
@@ -91,20 +104,20 @@ export default function CurrencyConverter() {
             <span className="text-orange-500 ml-2">(Fallback)</span>
           )}
           {rateInfo?.fromCache && !rateInfo?.isFallback && (
-            <span className="text-gray-400 ml-2">(gecached)</span>
+            <span className={`${theme.textMuted} ml-2`}>(gecached)</span>
           )}
         </div>
 
         {/* Eingabe */}
-        <div className="bg-white rounded-2xl p-5 shadow-sm">
-          <div className="text-xs text-gray-400 uppercase tracking-wider text-center mb-3">
+        <div className={`${cardBg} rounded-2xl p-5 shadow-sm`}>
+          <div className={`text-xs ${theme.textMuted} uppercase tracking-wider text-center mb-3`}>
             {fromCurrency} eingeben
           </div>
 
-          <div className="bg-gray-50 rounded-xl p-6 relative">
+          <div className={`${inputBg} rounded-xl p-6 relative`}>
             {inputAmount > 0 ? (
               <div
-                className="text-4xl font-bold text-gray-900 tabular-nums text-center cursor-text"
+                className={`text-4xl font-bold ${theme.textPrimary} tabular-nums text-center cursor-text`}
                 onClick={() => document.getElementById('currency-input').focus()}
               >
                 {formatNumber(inputAmount)} {fromCurrency}
@@ -116,7 +129,7 @@ export default function CurrencyConverter() {
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 placeholder={`0 ${fromCurrency}`}
-                className="text-4xl font-bold text-gray-900 tabular-nums w-full bg-transparent border-none outline-none placeholder-gray-300 text-center"
+                className={`text-4xl font-bold ${theme.textPrimary} tabular-nums w-full bg-transparent border-none outline-none placeholder-gray-400 text-center`}
               />
             )}
             <input
@@ -134,7 +147,7 @@ export default function CurrencyConverter() {
         <div className="flex justify-center">
           <button
             onClick={toggleDirection}
-            className="flex items-center gap-2 px-4 py-2 bg-white rounded-full shadow-sm border border-gray-200 text-gray-600 hover:bg-gray-50 active:bg-gray-100 transition-colors"
+            className={`flex items-center gap-2 px-4 py-2 rounded-full shadow-sm border transition-colors ${toggleBg}`}
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
@@ -145,12 +158,12 @@ export default function CurrencyConverter() {
 
         {/* Ergebnis */}
         {inputAmount > 0 && (
-          <div className="bg-blue-50 border border-blue-100 rounded-2xl p-6 text-center">
-            <div className="text-blue-600 text-sm uppercase tracking-wider">Ergebnis</div>
-            <div className="text-4xl font-bold text-blue-600 mt-3 tabular-nums">
+          <div className={`${resultBg} border rounded-2xl p-6 text-center`}>
+            <div className={`${resultText} text-sm uppercase tracking-wider`}>Ergebnis</div>
+            <div className={`text-4xl font-bold ${resultText} mt-3 tabular-nums`}>
               {formatNumber(convertedAmount)} {toCurrency}
             </div>
-            <div className="text-gray-500 text-sm mt-3">
+            <div className={`${theme.textSecondary} text-sm mt-3`}>
               {isAedToEur ? (
                 <>1 AED = {(1 / exchangeRate).toFixed(4)} EUR</>
               ) : (
@@ -161,7 +174,7 @@ export default function CurrencyConverter() {
         )}
 
         {/* Info */}
-        <p className="text-xs text-gray-400 text-center mt-4">
+        <p className={`text-xs ${theme.textMuted} text-center mt-4`}>
           Wechselkurs wird alle 4 Stunden aktualisiert
         </p>
       </div>

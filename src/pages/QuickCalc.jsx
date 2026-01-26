@@ -4,12 +4,14 @@ import { isAdmin } from '../lib/auth';
 import { getCostDefaults } from '../lib/storage';
 import { getExchangeRate, aedToEur, eurToAed } from '../lib/exchangeRate';
 import { formatCurrency, parseCurrencyInput } from '../lib/formatters';
+import { useTheme } from '../lib/theme.jsx';
 import Header from '../components/Header';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/Tabs';
 
 export default function QuickCalc() {
   const navigate = useNavigate();
+  const { theme, themeId } = useTheme();
   const [loading, setLoading] = useState(true);
   const [exchangeRate, setExchangeRate] = useState(null);
   const [rateInfo, setRateInfo] = useState(null);
@@ -113,8 +115,15 @@ export default function QuickCalc() {
 
   const marginColors = getMarginColor(margin1, marginPct1);
 
+  // Theme-aware card styles
+  const cardBg = themeId === 'dark' ? 'bg-gray-800' : 'bg-white';
+  const inputBg = themeId === 'dark' ? 'bg-gray-700' : 'bg-gray-50';
+  const breakdownText = themeId === 'dark' ? 'text-gray-400' : 'text-gray-400';
+  const breakdownValue = themeId === 'dark' ? 'text-gray-200' : 'text-gray-900';
+  const borderColor = themeId === 'dark' ? 'border-gray-700' : 'border-gray-100';
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-sky-100 via-blue-100 to-cyan-100 pb-8">
+    <div className={`min-h-screen ${theme.pageBg} pb-8`}>
       <Header
         title="Rechner"
         showBack
@@ -123,7 +132,7 @@ export default function QuickCalc() {
 
       <div className="p-4 space-y-4">
         {/* Kurs-Banner */}
-        <div className="text-center py-1 text-gray-400 text-sm">
+        <div className={`text-center py-1 ${theme.textMuted} text-sm`}>
           1 EUR = {exchangeRate?.toFixed(2)} AED
           {rateInfo?.isFallback && <span className="text-orange-500 ml-2">(Fallback)</span>}
         </div>
@@ -138,14 +147,14 @@ export default function QuickCalc() {
           {/* ========== SCHNELLRECHNER TAB ========== */}
           <TabsContent value="schnellrechner" className="mt-4 space-y-4">
             {/* Haupt-Eingaben - Design 4: Zentriert mit inneren Boxen */}
-            <div className="bg-white rounded-2xl p-5 shadow-sm">
+            <div className={`${cardBg} rounded-2xl p-5 shadow-sm`}>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <div className="text-xs text-gray-400 uppercase tracking-wider text-center mb-2">Einkauf AED</div>
-                  <div className="bg-gray-50 rounded-xl p-4 relative">
+                  <div className={`text-xs ${theme.textMuted} uppercase tracking-wider text-center mb-2`}>Einkauf AED</div>
+                  <div className={`${inputBg} rounded-xl p-4 relative`}>
                     {dealerAED > 0 ? (
                       <div
-                        className="text-2xl font-bold text-gray-900 tabular-nums text-center cursor-text"
+                        className={`text-2xl font-bold ${theme.textPrimary} tabular-nums text-center cursor-text`}
                         onClick={() => document.getElementById('schnell-aed').focus()}
                       >
                         {new Intl.NumberFormat('de-DE').format(dealerAED)}
@@ -157,7 +166,7 @@ export default function QuickCalc() {
                         value={dealerPriceAED}
                         onChange={(e) => setDealerPriceAED(e.target.value)}
                         placeholder="0"
-                        className="text-2xl font-bold text-gray-900 tabular-nums w-full bg-transparent border-none outline-none placeholder-gray-300 text-center"
+                        className={`text-2xl font-bold ${theme.textPrimary} tabular-nums w-full bg-transparent border-none outline-none placeholder-gray-400 text-center`}
                       />
                     )}
                     <input
@@ -170,16 +179,16 @@ export default function QuickCalc() {
                     />
                   </div>
                   {dealerAED > 0 && (
-                    <div className="text-gray-400 text-xs text-center mt-2">≈ {formatCurrency(dealerEUR)}</div>
+                    <div className={`${theme.textMuted} text-xs text-center mt-2`}>≈ {formatCurrency(dealerEUR)}</div>
                   )}
                 </div>
 
                 <div>
-                  <div className="text-xs text-gray-400 uppercase tracking-wider text-center mb-2">Verkauf EUR</div>
-                  <div className="bg-gray-50 rounded-xl p-4 relative">
+                  <div className={`text-xs ${theme.textMuted} uppercase tracking-wider text-center mb-2`}>Verkauf EUR</div>
+                  <div className={`${inputBg} rounded-xl p-4 relative`}>
                     {market1 > 0 ? (
                       <div
-                        className="text-2xl font-bold text-gray-900 tabular-nums text-center cursor-text"
+                        className={`text-2xl font-bold ${theme.textPrimary} tabular-nums text-center cursor-text`}
                         onClick={() => document.getElementById('schnell-eur').focus()}
                       >
                         {new Intl.NumberFormat('de-DE').format(market1)}
@@ -191,7 +200,7 @@ export default function QuickCalc() {
                         value={marketPriceDE1}
                         onChange={(e) => setMarketPriceDE1(e.target.value)}
                         placeholder="0"
-                        className="text-2xl font-bold text-gray-900 tabular-nums w-full bg-transparent border-none outline-none placeholder-gray-300 text-center"
+                        className={`text-2xl font-bold ${theme.textPrimary} tabular-nums w-full bg-transparent border-none outline-none placeholder-gray-400 text-center`}
                       />
                     )}
                     <input
@@ -210,34 +219,34 @@ export default function QuickCalc() {
             {/* Kosten Breakdown - nur anzeigen wenn Werte eingegeben */}
             {dealerAED > 0 && market1 > 0 && (
               <>
-                <div className="bg-white rounded-2xl p-5 shadow-sm space-y-3">
-                  <div className="flex justify-between text-gray-400">
+                <div className={`${cardBg} rounded-2xl p-5 shadow-sm space-y-3`}>
+                  <div className={`flex justify-between ${breakdownText}`}>
                     <span>Kaufpreis</span>
-                    <span className="text-gray-900 tabular-nums">{formatCurrency(dealerEUR)}</span>
+                    <span className={`${breakdownValue} tabular-nums`}>{formatCurrency(dealerEUR)}</span>
                   </div>
-                  <div className="flex justify-between text-gray-400">
+                  <div className={`flex justify-between ${breakdownText}`}>
                     <span>Zoll (10%)</span>
-                    <span className="text-gray-900 tabular-nums">{formatCurrency(duty1)}</span>
+                    <span className={`${breakdownValue} tabular-nums`}>{formatCurrency(duty1)}</span>
                   </div>
-                  <div className="flex justify-between text-gray-400">
+                  <div className={`flex justify-between ${breakdownText}`}>
                     <span>EUSt (19%)</span>
-                    <span className="text-gray-900 tabular-nums">{formatCurrency(vat1)}</span>
+                    <span className={`${breakdownValue} tabular-nums`}>{formatCurrency(vat1)}</span>
                   </div>
-                  <div className="flex justify-between text-gray-400">
+                  <div className={`flex justify-between ${breakdownText}`}>
                     <span>Transport</span>
-                    <span className="text-gray-900 tabular-nums">{formatCurrency(transport)}</span>
+                    <span className={`${breakdownValue} tabular-nums`}>{formatCurrency(transport)}</span>
                   </div>
-                  <div className="flex justify-between text-gray-400">
+                  <div className={`flex justify-between ${breakdownText}`}>
                     <span>TÜV/Zulassung</span>
-                    <span className="text-gray-900 tabular-nums">{formatCurrency(tuv)}</span>
+                    <span className={`${breakdownValue} tabular-nums`}>{formatCurrency(tuv)}</span>
                   </div>
-                  <div className="flex justify-between text-gray-400">
+                  <div className={`flex justify-between ${breakdownText}`}>
                     <span>Sonstiges</span>
-                    <span className="text-gray-900 tabular-nums">{formatCurrency(misc)}</span>
+                    <span className={`${breakdownValue} tabular-nums`}>{formatCurrency(misc)}</span>
                   </div>
-                  <div className="border-t border-gray-100 pt-3 flex justify-between">
-                    <span className="text-gray-600 font-medium">Gesamt</span>
-                    <span className="text-gray-900 font-semibold tabular-nums">{formatCurrency(totalCost1)}</span>
+                  <div className={`border-t ${borderColor} pt-3 flex justify-between`}>
+                    <span className={`${theme.textSecondary} font-medium`}>Gesamt</span>
+                    <span className={`${theme.textPrimary} font-semibold tabular-nums`}>{formatCurrency(totalCost1)}</span>
                   </div>
                 </div>
 
@@ -256,13 +265,13 @@ export default function QuickCalc() {
           {/* ========== AUKTION TAB ========== */}
           <TabsContent value="auktion" className="mt-4 space-y-4">
             {/* Haupt-Eingabe - Design 4: Zentriert mit innerem Rahmen */}
-            <div className="bg-white rounded-2xl p-5 shadow-sm">
-              <div className="text-xs text-gray-400 uppercase tracking-wider text-center mb-3">Verkaufspreis DE</div>
+            <div className={`${cardBg} rounded-2xl p-5 shadow-sm`}>
+              <div className={`text-xs ${theme.textMuted} uppercase tracking-wider text-center mb-3`}>Verkaufspreis DE</div>
 
-              <div className="bg-gray-50 rounded-xl p-6 relative">
+              <div className={`${inputBg} rounded-xl p-6 relative`}>
                 {market2 > 0 ? (
                   <div
-                    className="text-4xl font-bold text-gray-900 tabular-nums text-center cursor-text"
+                    className={`text-4xl font-bold ${theme.textPrimary} tabular-nums text-center cursor-text`}
                     onClick={() => document.getElementById('auction-input').focus()}
                   >
                     {formatCurrency(market2)}
@@ -274,7 +283,7 @@ export default function QuickCalc() {
                     value={marketPriceDE2}
                     onChange={(e) => setMarketPriceDE2(e.target.value)}
                     placeholder="0 €"
-                    className="text-4xl font-bold text-gray-900 tabular-nums w-full bg-transparent border-none outline-none placeholder-gray-300 text-center"
+                    className={`text-4xl font-bold ${theme.textPrimary} tabular-nums w-full bg-transparent border-none outline-none placeholder-gray-400 text-center`}
                   />
                 )}
                 <input
@@ -287,54 +296,54 @@ export default function QuickCalc() {
                 />
               </div>
 
-              <p className="text-xs text-gray-400 text-center mt-3">
+              <p className={`text-xs ${theme.textMuted} text-center mt-3`}>
                 Günstigstes vergleichbares Fahrzeug auf mobile.de
               </p>
             </div>
 
             {/* Max Bid Result */}
             {market2 > 0 && (
-              <div className="bg-blue-50 border border-blue-100 rounded-2xl p-6 text-center">
-                <div className="text-blue-600 text-sm uppercase tracking-wider">Maximales Gebot</div>
-                <div className="text-blue-600 text-xs mt-1">für mind. {auctionTargetPct}% Marge</div>
-                <div className="text-4xl font-bold text-blue-600 mt-3 tabular-nums">
+              <div className={`${themeId === 'dark' ? 'bg-blue-900/30 border-blue-800' : 'bg-blue-50 border-blue-100'} border rounded-2xl p-6 text-center`}>
+                <div className={`${themeId === 'dark' ? 'text-blue-400' : 'text-blue-600'} text-sm uppercase tracking-wider`}>Maximales Gebot</div>
+                <div className={`${themeId === 'dark' ? 'text-blue-400' : 'text-blue-600'} text-xs mt-1`}>für mind. {auctionTargetPct}% Marge</div>
+                <div className={`text-4xl font-bold ${themeId === 'dark' ? 'text-blue-400' : 'text-blue-600'} mt-3 tabular-nums`}>
                   {formatCurrency(maxBidAED, 'AED')}
                 </div>
-                <div className="text-gray-500 text-sm mt-1 tabular-nums">
+                <div className={`${theme.textSecondary} text-sm mt-1 tabular-nums`}>
                   ≈ {formatCurrency(maxBidEUR)}
                 </div>
 
                 {/* Breakdown */}
-                <div className="border-t border-blue-200 mt-4 pt-4 space-y-1 text-sm text-left">
-                  <div className="flex justify-between text-gray-500">
+                <div className={`border-t ${themeId === 'dark' ? 'border-blue-800' : 'border-blue-200'} mt-4 pt-4 space-y-1 text-sm text-left`}>
+                  <div className={`flex justify-between ${theme.textSecondary}`}>
                     <span>Kaufpreis</span>
                     <span className="tabular-nums">{formatCurrency(maxBidEUR)}</span>
                   </div>
-                  <div className="flex justify-between text-gray-500">
+                  <div className={`flex justify-between ${theme.textSecondary}`}>
                     <span>+ Zoll (10%)</span>
                     <span className="tabular-nums">{formatCurrency(auctionDuty)}</span>
                   </div>
-                  <div className="flex justify-between text-gray-500">
+                  <div className={`flex justify-between ${theme.textSecondary}`}>
                     <span>+ EUSt (19%)</span>
                     <span className="tabular-nums">{formatCurrency(auctionVat)}</span>
                   </div>
-                  <div className="flex justify-between text-gray-500">
+                  <div className={`flex justify-between ${theme.textSecondary}`}>
                     <span>+ Transport</span>
                     <span className="tabular-nums">{formatCurrency(transport)}</span>
                   </div>
-                  <div className="flex justify-between text-gray-500">
+                  <div className={`flex justify-between ${theme.textSecondary}`}>
                     <span>+ TÜV/Zulassung</span>
                     <span className="tabular-nums">{formatCurrency(tuv)}</span>
                   </div>
-                  <div className="flex justify-between text-gray-500">
+                  <div className={`flex justify-between ${theme.textSecondary}`}>
                     <span>+ Sonstiges</span>
                     <span className="tabular-nums">{formatCurrency(misc)}</span>
                   </div>
-                  <div className="flex justify-between font-medium text-gray-700 pt-1">
+                  <div className={`flex justify-between font-medium ${theme.textPrimary} pt-1`}>
                     <span>= Gesamtkosten</span>
                     <span className="tabular-nums">{formatCurrency(auctionTotalCost)}</span>
                   </div>
-                  <div className="flex justify-between text-gray-500 pt-2">
+                  <div className={`flex justify-between ${theme.textSecondary} pt-2`}>
                     <span>Verkauf DE</span>
                     <span className="tabular-nums">{formatCurrency(market2)}</span>
                   </div>

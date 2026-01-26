@@ -4,6 +4,7 @@ import { getAllVehicles, getCostDefaults } from '../lib/storage';
 import { getAmpelStatus, calculateCosts, getReviewConsensus, aedToEur } from '../lib/calculations';
 import { formatCurrency, formatMileage, STATUS_LABELS, STATUS_COLORS } from '../lib/formatters';
 import { isAdmin, getCurrentUser, clearCurrentUser } from '../lib/auth';
+import { useTheme } from '../lib/theme.jsx';
 import Header from '../components/Header';
 import Card from '../components/Card';
 import Badge from '../components/Badge';
@@ -52,6 +53,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const currentUser = getCurrentUser();
   const userIsAdmin = isAdmin();
+  const { theme, themeId } = useTheme();
 
   useEffect(() => {
     loadData();
@@ -153,15 +155,34 @@ export default function Dashboard() {
 
   const sortOptions = userIsAdmin ? SORT_OPTIONS_ADMIN : SORT_OPTIONS_MECHANIC;
 
+  // Theme-aware styles
+  const userBarBg = themeId === 'dark'
+    ? 'bg-gray-800 border-gray-700'
+    : themeId === 'modern'
+      ? 'bg-white/60 backdrop-blur-sm border-white/50'
+      : 'bg-white border-gray-100';
+
+  const filterBarBg = themeId === 'dark'
+    ? 'bg-gray-800 border-gray-700'
+    : themeId === 'modern'
+      ? 'bg-white/80 backdrop-blur-sm border-white/50'
+      : 'bg-white border-gray-100';
+
+  const logoutButtonStyle = themeId === 'modern'
+    ? 'text-white/80 hover:text-white active:text-white/60'
+    : themeId === 'dark'
+      ? 'text-gray-400 hover:text-gray-200'
+      : 'text-gray-600 hover:text-gray-900';
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-sky-100 via-blue-100 to-cyan-100 pb-24">
+    <div className={`min-h-screen ${theme.pageBg} pb-24`}>
       <Header
         title="Fahrzeuge"
         showMenu={userIsAdmin}
         rightAction={
           <button
             onClick={handleLogout}
-            className="text-sm text-white/80 hover:text-white active:text-white/60 px-2 py-1"
+            className={`text-sm px-2 py-1 ${logoutButtonStyle}`}
           >
             Abmelden
           </button>
@@ -169,14 +190,14 @@ export default function Dashboard() {
       />
 
       {/* User info bar */}
-      <div className="px-4 py-2 bg-white/60 backdrop-blur-sm border-b border-white/50">
+      <div className={`px-4 py-2 border-b ${userBarBg}`}>
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 bg-blue-500 rounded-full flex items-center justify-center">
+          <div className={`w-7 h-7 ${themeId === 'dark' ? 'bg-blue-600' : 'bg-blue-500'} rounded-full flex items-center justify-center`}>
             <span className="text-white font-bold text-sm">{currentUser?.name?.charAt(0)}</span>
           </div>
           <div>
-            <span className="text-sm font-medium text-gray-700">{currentUser?.name}</span>
-            <span className="text-xs text-blue-500 ml-2">
+            <span className={`text-sm font-medium ${theme.textPrimary}`}>{currentUser?.name}</span>
+            <span className={`text-xs ${theme.accent} ml-2`}>
               {userIsAdmin ? 'Admin' : 'Mechaniker'}
             </span>
           </div>
@@ -184,7 +205,7 @@ export default function Dashboard() {
       </div>
 
       {/* Filters */}
-      <div className="p-4 space-y-3 bg-white/80 backdrop-blur-sm border-b border-white/50">
+      <div className={`p-4 space-y-3 border-b ${filterBarBg}`}>
         <Input
           placeholder="Suchen (Titel, VIN, Farbe...)"
           value={search}
@@ -219,7 +240,7 @@ export default function Dashboard() {
 
       {/* Stats summary for Admin - optimiert: 1 Iteration statt 3 */}
       {userIsAdmin && vehicles.length > 0 && (
-        <StatsBar vehicles={filteredAndSortedVehicles} settings={settings} />
+        <StatsBar vehicles={filteredAndSortedVehicles} settings={settings} themeId={themeId} theme={theme} />
       )}
 
       {/* Vehicle list */}
@@ -268,7 +289,7 @@ export default function Dashboard() {
 }
 
 // Optimierte Stats-Berechnung: 1 Iteration statt 3 separate filter()
-function StatsBar({ vehicles, settings }) {
+function StatsBar({ vehicles, settings, themeId, theme }) {
   // useMemo für gecachte Berechnung
   const stats = useMemo(() => {
     const counts = { green: 0, yellow: 0, red: 0 };
@@ -279,28 +300,38 @@ function StatsBar({ vehicles, settings }) {
     return counts;
   }, [vehicles, settings]);
 
+  const barBg = themeId === 'dark'
+    ? 'bg-gray-800 border-gray-700'
+    : themeId === 'modern'
+      ? 'bg-white/80 backdrop-blur-sm border-white/50'
+      : 'bg-white border-gray-100';
+
+  const statBgGreen = themeId === 'dark' ? 'bg-green-900/50' : 'bg-green-50';
+  const statBgYellow = themeId === 'dark' ? 'bg-yellow-900/50' : 'bg-yellow-50';
+  const statBgRed = themeId === 'dark' ? 'bg-red-900/50' : 'bg-red-50';
+
   return (
-    <div className="px-4 py-3 bg-white/80 backdrop-blur-sm border-b border-white/50">
+    <div className={`px-4 py-3 border-b ${barBg}`}>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <svg className="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+          <svg className={`w-4 h-4 ${theme.accent}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" />
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" />
           </svg>
-          <span className="text-sm font-medium text-gray-700 tabular-nums">
+          <span className={`text-sm font-medium ${theme.textPrimary} tabular-nums`}>
             {vehicles.length} Fahrzeuge
           </span>
         </div>
         <div className="flex items-center gap-3 text-sm">
-          <span className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-green-50">
+          <span className={`flex items-center gap-1.5 px-2 py-1 rounded-full ${statBgGreen}`}>
             <span className="w-2.5 h-2.5 rounded-full bg-green-500" aria-hidden="true"></span>
             <span className="text-green-700 font-medium tabular-nums">{stats.green}</span>
           </span>
-          <span className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-yellow-50">
+          <span className={`flex items-center gap-1.5 px-2 py-1 rounded-full ${statBgYellow}`}>
             <span className="w-2.5 h-2.5 rounded-full bg-yellow-500" aria-hidden="true"></span>
             <span className="text-yellow-700 font-medium tabular-nums">{stats.yellow}</span>
           </span>
-          <span className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-red-50">
+          <span className={`flex items-center gap-1.5 px-2 py-1 rounded-full ${statBgRed}`}>
             <span className="w-2.5 h-2.5 rounded-full bg-red-500" aria-hidden="true"></span>
             <span className="text-red-700 font-medium tabular-nums">{stats.red}</span>
           </span>
