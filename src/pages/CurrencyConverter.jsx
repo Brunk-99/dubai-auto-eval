@@ -84,7 +84,12 @@ export default function CurrencyConverter() {
         {/* Kurs-Banner */}
         <div className="text-center py-1 text-gray-400 text-sm">
           1 EUR = {exchangeRate?.toFixed(4)} AED
-          {rateInfo?.isFallback && <span className="text-orange-500 ml-2">(Fallback)</span>}
+          {rateInfo?.isFallback && rateInfo?.isLastKnown && (
+            <span className="text-orange-500 ml-2">(letzter Kurs)</span>
+          )}
+          {rateInfo?.isFallback && !rateInfo?.isLastKnown && (
+            <span className="text-orange-500 ml-2">(Fallback)</span>
+          )}
           {rateInfo?.fromCache && !rateInfo?.isFallback && (
             <span className="text-gray-400 ml-2">(gecached)</span>
           )}

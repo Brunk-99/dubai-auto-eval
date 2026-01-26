@@ -3,7 +3,7 @@
 
 const CACHE_KEY = 'exchange_rate_cache';
 const CACHE_DURATION = 4 * 60 * 60 * 1000; // 4 hours in ms
-const FALLBACK_RATE = 4.35; // Fallback if API fails
+const HARDCODED_FALLBACK = 4.35; // Only used if no cached rate exists at all
 
 // Get cached rate from localStorage
 function getCachedRate() {
@@ -14,10 +14,13 @@ function getCachedRate() {
     const { rate, timestamp } = JSON.parse(cached);
     const age = Date.now() - timestamp;
 
-    // Return cached rate if still valid
-    if (age < CACHE_DURATION) {
-      return { rate, fromCache: true, timestamp };
-    }
+    // Return rate with info about whether it's still fresh
+    return {
+      rate,
+      timestamp,
+      isFresh: age < CACHE_DURATION,
+      age,
+    };
   } catch (e) {
     console.warn('[ExchangeRate] Cache read error:', e);
   }
@@ -61,12 +64,33 @@ async function fetchRate() {
   }
 }
 
+// Get the best available fallback rate (last known or hardcoded)
+function getFallbackRate() {
+  const cached = getCachedRate();
+  if (cached?.rate) {
+    console.log('[ExchangeRate] Using last known rate as fallback:', cached.rate);
+    return {
+      rate: cached.rate,
+      timestamp: cached.timestamp,
+      isLastKnown: true,
+    };
+  }
+  console.warn('[ExchangeRate] No cached rate, using hardcoded fallback:', HARDCODED_FALLBACK);
+  return {
+    rate: HARDCODED_FALLBACK,
+    timestamp: null,
+    isHardcoded: true,
+  };
+}
+
 // Get current AED/EUR rate (1 EUR = X AED)
 export async function getExchangeRate() {
   // Check cache first
   const cached = getCachedRate();
-  if (cached) {
-    console.log('[ExchangeRate] Using cached rate:', cached.rate);
+
+  // If cache is fresh, use it
+  if (cached?.isFresh) {
+    console.log('[ExchangeRate] Using fresh cached rate:', cached.rate);
     return {
       rate: cached.rate,
       fromCache: true,
@@ -74,7 +98,7 @@ export async function getExchangeRate() {
     };
   }
 
-  // Fetch fresh rate
+  // Cache expired or empty, try to fetch fresh rate
   const freshRate = await fetchRate();
 
   if (freshRate) {
@@ -86,20 +110,24 @@ export async function getExchangeRate() {
     };
   }
 
-  // Fallback if everything fails
-  console.warn('[ExchangeRate] Using fallback rate:', FALLBACK_RATE);
+  // API failed - use fallback (last known rate or hardcoded)
+  const fallback = getFallbackRate();
+
   return {
-    rate: FALLBACK_RATE,
+    rate: fallback.rate,
     fromCache: false,
     isFallback: true,
-    updatedAt: null,
+    isLastKnown: fallback.isLastKnown || false,
+    updatedAt: fallback.timestamp
+      ? new Date(fallback.timestamp).toLocaleString('de-DE')
+      : null,
   };
 }
 
 // Synchronous getter for cached rate (for calculations that can't await)
 export function getCachedExchangeRate() {
   const cached = getCachedRate();
-  return cached?.rate || FALLBACK_RATE;
+  return cached?.rate || HARDCODED_FALLBACK;
 }
 
 // Force refresh the rate
