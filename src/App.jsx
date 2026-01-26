@@ -7,6 +7,7 @@ import VehicleDetails from './pages/VehicleDetails';
 import VehicleForm from './pages/VehicleForm';
 import Settings from './pages/Settings';
 import QuickCalc from './pages/QuickCalc';
+import CurrencyConverter from './pages/CurrencyConverter';
 import DesignTest from './pages/DesignTest';
 import { isAuthenticated } from './lib/auth';
 import { migrateVehicles } from './lib/storage';
@@ -93,6 +94,17 @@ function App() {
           <RequireAuth>
             <RequireAdmin>
               <QuickCalc />
+            </RequireAdmin>
+          </RequireAuth>
+        }
+      />
+
+      <Route
+        path="/currency"
+        element={
+          <RequireAuth>
+            <RequireAdmin>
+              <CurrencyConverter />
             </RequireAdmin>
           </RequireAuth>
         }
