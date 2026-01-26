@@ -302,8 +302,12 @@ export default function QuickCalc() {
                     <span className="tabular-nums">{formatCurrency(maxBidEUR)}</span>
                   </div>
                   <div className="flex justify-between text-gray-500">
-                    <span>+ Zoll & EUSt</span>
-                    <span className="tabular-nums">{formatCurrency(auctionDuty + auctionVat)}</span>
+                    <span>+ Zoll (10%)</span>
+                    <span className="tabular-nums">{formatCurrency(auctionDuty)}</span>
+                  </div>
+                  <div className="flex justify-between text-gray-500">
+                    <span>+ EUSt (19%)</span>
+                    <span className="tabular-nums">{formatCurrency(auctionVat)}</span>
                   </div>
                   <div className="flex justify-between text-gray-500">
                     <span>+ Nebenkosten</span>
