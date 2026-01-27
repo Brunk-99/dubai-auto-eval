@@ -1445,13 +1445,13 @@ function CostsTab({ vehicle, costs, settings }) {
       '--- Kosten (bei aktuellem Gebot) ---',
       `Kaufpreis: ${formatCurrency(costs.bidPrice)}`,
       `Zoll (10%): ${formatCurrency(costs.duty10)}`,
-      `MwSt (19%): ${formatCurrency(costs.vat19)}`,
+      `(MwSt 19%: ${formatCurrency(costs.vat19)}) - Vorsteuer, wird erstattet`,
       `Transport: ${formatCurrency(costs.transportCost)}`,
       `TÜV: ${formatCurrency(costs.tuvCost)}`,
       `Sonstiges: ${formatCurrency(costs.miscCost)}`,
       `Reparatur (gepuffert): ${formatCurrency(costs.repairBuffered)}`,
       '',
-      `GESAMTKOSTEN: ${formatCurrency(costs.totalCost)}`,
+      `GESAMTKOSTEN: ${formatCurrency(costs.totalCost)} (ohne MwSt)`,
       '',
       '--- Ergebnis ---',
       `Vergleichspreis DE: ${formatCurrency(costs.marketPrice)}`,
@@ -1531,11 +1531,11 @@ function CostsTab({ vehicle, costs, settings }) {
               <span>-{formatCurrency(costs.repairBuffered)}</span>
             </div>
             <div className="flex justify-between pt-2 border-t border-blue-200 font-semibold">
-              <span>Verfügbar inkl. Zoll/MwSt</span>
+              <span>Verfügbar inkl. Zoll</span>
               <span>{formatCurrency(costs.marketPrice - costs.targetProfit - costs.safetyDeduction - costs.otherCosts)}</span>
             </div>
             <div className="flex justify-between">
-              <span>÷ 1,309 (Zoll + MwSt)</span>
+              <span>÷ 1,10 (nur Zoll, MwSt = Vorsteuer)</span>
               <span>= {formatCurrency(costs.maxBid)}</span>
             </div>
           </div>
@@ -1553,7 +1553,11 @@ function CostsTab({ vehicle, costs, settings }) {
         <div className="space-y-2">
           <CostRow label={`Kaufpreis (${formatCurrency(costs.bidPriceAED, 'AED')})`} value={costs.bidPrice} />
           <CostRow label="Zoll (10%)" value={costs.duty10} />
-          <CostRow label="MwSt (19%)" value={costs.vat19} />
+          {/* MwSt in Klammern - wird als Vorsteuer erstattet */}
+          <div className="flex justify-between items-center text-gray-400">
+            <span className="text-gray-400">(MwSt 19% - Vorsteuer)</span>
+            <span className="tabular-nums">({formatCurrency(costs.vat19)})</span>
+          </div>
           <CostRow label="Transport" value={costs.transportCost} />
           <CostRow label="TÜV/Zulassung" value={costs.tuvCost} />
           <CostRow label="Sonstiges" value={costs.miscCost} />
@@ -1571,6 +1575,7 @@ function CostsTab({ vehicle, costs, settings }) {
 
           <div className="pt-3 mt-3 border-t-2 border-gray-200">
             <CostRow label="GESAMTKOSTEN" value={costs.totalCost} bold />
+            <p className="text-xs text-gray-400 mt-1">ohne MwSt (wird als Vorsteuer erstattet)</p>
           </div>
         </div>
       </Card>

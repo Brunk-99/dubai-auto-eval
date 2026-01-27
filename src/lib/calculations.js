@@ -106,10 +106,13 @@ export function calculateCosts(vehicle, settings = {}) {
   // Other costs (excluding purchase price and duties)
   const otherCosts = transportCost + tuvCost + miscCost + repairBuffered;
 
-  // Total cost
-  const totalCost = bidPrice + duty10 + vat19 + otherCosts;
+  // Total cost (WITHOUT VAT - VAT is recoverable as Vorsteuer when selling via GmbH)
+  const totalCost = bidPrice + duty10 + otherCosts;
 
-  // Profit
+  // Total cost including VAT (for display only - shows cash flow)
+  const totalCostWithVat = totalCost + vat19;
+
+  // Profit (VAT excluded - we get it back as Vorsteuer)
   const profit = marketPrice - totalCost;
 
   // ROI percentage
@@ -119,9 +122,9 @@ export function calculateCosts(vehicle, settings = {}) {
   const profitPct = marketPrice > 0 ? (profit / marketPrice) * 100 : 0;
 
   // Calculate max bid (in EUR)
-  // Formula: maxBidRaw = (marketPrice - targetProfit - safetyDeduction - otherCosts) / 1.309
-  // 1.309 = 1 + 0.10 (duty) + 0.19 * 1.10 (VAT on price+duty)
-  const maxBidRaw = (marketPrice - targetProfit - safetyDeduction - otherCosts) / 1.309;
+  // Formula: maxBidRaw = (marketPrice - targetProfit - safetyDeduction - otherCosts) / 1.10
+  // 1.10 = 1 + 0.10 (duty only, VAT is recoverable as Vorsteuer)
+  const maxBidRaw = (marketPrice - targetProfit - safetyDeduction - otherCosts) / 1.10;
   const maxBid = Math.max(0, roundDownToNearest50(maxBidRaw));
 
   // Max bid in AED
@@ -143,6 +146,7 @@ export function calculateCosts(vehicle, settings = {}) {
     repairBuffered,
     otherCosts,
     totalCost,
+    totalCostWithVat,
     profit,
     roiPct,
     profitPct,
