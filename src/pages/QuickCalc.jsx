@@ -7,6 +7,7 @@ import { formatCurrency, parseCurrencyInput } from '../lib/formatters';
 import { useTheme } from '../lib/theme.jsx';
 import Header from '../components/Header';
 import LoadingSpinner from '../components/LoadingSpinner';
+import NumberInput from '../components/NumberInput';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/Tabs';
 
 export default function QuickCalc() {
@@ -146,72 +147,30 @@ export default function QuickCalc() {
 
           {/* ========== SCHNELLRECHNER TAB ========== */}
           <TabsContent value="schnellrechner" className="mt-4 space-y-4">
-            {/* Haupt-Eingaben - Design 4: Zentriert mit inneren Boxen */}
+            {/* Haupt-Eingaben */}
             <div className={`${cardBg} rounded-2xl p-5 shadow-sm`}>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <div className={`text-xs ${theme.textMuted} uppercase tracking-wider text-center mb-2`}>Einkauf AED</div>
-                  <div className={`${inputBg} rounded-xl p-4 relative`}>
-                    {dealerAED > 0 ? (
-                      <div
-                        className={`text-2xl font-bold ${theme.textPrimary} tabular-nums text-center cursor-text`}
-                        onClick={() => document.getElementById('schnell-aed').focus()}
-                      >
-                        {new Intl.NumberFormat('de-DE').format(dealerAED)}
-                      </div>
-                    ) : (
-                      <input
-                        type="text"
-                        inputMode="decimal"
-                        value={dealerPriceAED}
-                        onChange={(e) => setDealerPriceAED(e.target.value)}
-                        placeholder="0"
-                        className={`text-2xl font-bold ${theme.textPrimary} tabular-nums w-full bg-transparent border-none outline-none placeholder-gray-400 text-center`}
-                      />
-                    )}
-                    <input
-                      id="schnell-aed"
-                      type="text"
-                      inputMode="decimal"
-                      value={dealerPriceAED}
-                      onChange={(e) => setDealerPriceAED(e.target.value)}
-                      className="absolute inset-0 opacity-0 cursor-text"
-                    />
-                  </div>
+                  <NumberInput
+                    label="Einkauf AED"
+                    value={dealerPriceAED}
+                    onChange={(e) => setDealerPriceAED(e.target.value)}
+                    placeholder="0"
+                    theme={{ inputBg, textPrimary: theme.textPrimary, textMuted: theme.textMuted }}
+                  />
                   {dealerAED > 0 && (
                     <div className={`${theme.textMuted} text-xs text-center mt-2`}>≈ {formatCurrency(dealerEUR)}</div>
                   )}
                 </div>
 
                 <div>
-                  <div className={`text-xs ${theme.textMuted} uppercase tracking-wider text-center mb-2`}>Verkauf EUR</div>
-                  <div className={`${inputBg} rounded-xl p-4 relative`}>
-                    {market1 > 0 ? (
-                      <div
-                        className={`text-2xl font-bold ${theme.textPrimary} tabular-nums text-center cursor-text`}
-                        onClick={() => document.getElementById('schnell-eur').focus()}
-                      >
-                        {new Intl.NumberFormat('de-DE').format(market1)}
-                      </div>
-                    ) : (
-                      <input
-                        type="text"
-                        inputMode="decimal"
-                        value={marketPriceDE1}
-                        onChange={(e) => setMarketPriceDE1(e.target.value)}
-                        placeholder="0"
-                        className={`text-2xl font-bold ${theme.textPrimary} tabular-nums w-full bg-transparent border-none outline-none placeholder-gray-400 text-center`}
-                      />
-                    )}
-                    <input
-                      id="schnell-eur"
-                      type="text"
-                      inputMode="decimal"
-                      value={marketPriceDE1}
-                      onChange={(e) => setMarketPriceDE1(e.target.value)}
-                      className="absolute inset-0 opacity-0 cursor-text"
-                    />
-                  </div>
+                  <NumberInput
+                    label="Verkauf EUR"
+                    value={marketPriceDE1}
+                    onChange={(e) => setMarketPriceDE1(e.target.value)}
+                    placeholder="0"
+                    theme={{ inputBg, textPrimary: theme.textPrimary, textMuted: theme.textMuted }}
+                  />
                 </div>
               </div>
             </div>
@@ -264,37 +223,17 @@ export default function QuickCalc() {
 
           {/* ========== AUKTION TAB ========== */}
           <TabsContent value="auktion" className="mt-4 space-y-4">
-            {/* Haupt-Eingabe - Design 4: Zentriert mit innerem Rahmen */}
+            {/* Haupt-Eingabe */}
             <div className={`${cardBg} rounded-2xl p-5 shadow-sm`}>
-              <div className={`text-xs ${theme.textMuted} uppercase tracking-wider text-center mb-3`}>Verkaufspreis DE</div>
-
-              <div className={`${inputBg} rounded-xl p-6 relative`}>
-                {market2 > 0 ? (
-                  <div
-                    className={`text-4xl font-bold ${theme.textPrimary} tabular-nums text-center cursor-text`}
-                    onClick={() => document.getElementById('auction-input').focus()}
-                  >
-                    {formatCurrency(market2)}
-                  </div>
-                ) : (
-                  <input
-                    type="text"
-                    inputMode="decimal"
-                    value={marketPriceDE2}
-                    onChange={(e) => setMarketPriceDE2(e.target.value)}
-                    placeholder="0 €"
-                    className={`text-4xl font-bold ${theme.textPrimary} tabular-nums w-full bg-transparent border-none outline-none placeholder-gray-400 text-center`}
-                  />
-                )}
-                <input
-                  id="auction-input"
-                  type="text"
-                  inputMode="decimal"
-                  value={marketPriceDE2}
-                  onChange={(e) => setMarketPriceDE2(e.target.value)}
-                  className="absolute inset-0 opacity-0 cursor-text"
-                />
-              </div>
+              <NumberInput
+                label="Verkaufspreis DE"
+                value={marketPriceDE2}
+                onChange={(e) => setMarketPriceDE2(e.target.value)}
+                placeholder="0"
+                suffix="€"
+                size="large"
+                theme={{ inputBg, textPrimary: theme.textPrimary, textMuted: theme.textMuted }}
+              />
 
               <p className={`text-xs ${theme.textMuted} text-center mt-3`}>
                 Günstigstes vergleichbares Fahrzeug auf mobile.de
