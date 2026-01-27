@@ -5,6 +5,7 @@ import { getExchangeRate, aedToEur, eurToAed } from '../lib/exchangeRate';
 import { useTheme } from '../lib/theme.jsx';
 import Header from '../components/Header';
 import LoadingSpinner from '../components/LoadingSpinner';
+import NumberInput from '../components/NumberInput';
 
 export default function CurrencyConverter() {
   const navigate = useNavigate();
@@ -110,37 +111,15 @@ export default function CurrencyConverter() {
 
         {/* Eingabe */}
         <div className={`${cardBg} rounded-2xl p-5 shadow-sm`}>
-          <div className={`text-xs ${theme.textMuted} uppercase tracking-wider text-center mb-3`}>
-            {fromCurrency} eingeben
-          </div>
-
-          <div className={`${inputBg} rounded-xl p-6 relative`}>
-            {inputAmount > 0 ? (
-              <div
-                className={`text-4xl font-bold ${theme.textPrimary} tabular-nums text-center cursor-text`}
-                onClick={() => document.getElementById('currency-input').focus()}
-              >
-                {formatNumber(inputAmount)} {fromCurrency}
-              </div>
-            ) : (
-              <input
-                type="text"
-                inputMode="decimal"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                placeholder={`0 ${fromCurrency}`}
-                className={`text-4xl font-bold ${theme.textPrimary} tabular-nums w-full bg-transparent border-none outline-none placeholder-gray-400 text-center`}
-              />
-            )}
-            <input
-              id="currency-input"
-              type="text"
-              inputMode="decimal"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              className="absolute inset-0 opacity-0 cursor-text"
-            />
-          </div>
+          <NumberInput
+            label={`${fromCurrency} eingeben`}
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            placeholder="0"
+            suffix={fromCurrency}
+            size="large"
+            theme={{ inputBg, textPrimary: theme.textPrimary, textMuted: theme.textMuted }}
+          />
         </div>
 
         {/* Toggle Button */}
