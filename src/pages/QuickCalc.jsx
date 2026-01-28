@@ -75,7 +75,8 @@ export default function QuickCalc() {
   const duty1 = dealerEUR * 0.10;
   const vatBase1 = dealerEUR + duty1;
   const vat1 = vatBase1 * 0.19;
-  const totalCost1 = dealerEUR + duty1 + vat1 + otherCosts;
+  // Total cost WITHOUT VAT - VAT is recoverable as Vorsteuer when selling via GmbH
+  const totalCost1 = dealerEUR + duty1 + otherCosts;
   const margin1 = market1 - totalCost1;
   const marginPct1 = market1 > 0 ? (margin1 / market1) * 100 : 0;
 
@@ -93,8 +94,9 @@ export default function QuickCalc() {
   const auctionTargetPct = 15;
   const targetMargin = market2 * (auctionTargetPct / 100);
 
-  // Formula: maxBid = (marketPrice - targetMargin - otherCosts) / 1.309
-  const maxBidRaw = (market2 - targetMargin - otherCosts) / 1.309;
+  // Formula: maxBid = (marketPrice - targetMargin - otherCosts) / 1.10
+  // 1.10 = 1 + 0.10 (duty only, VAT is recoverable as Vorsteuer)
+  const maxBidRaw = (market2 - targetMargin - otherCosts) / 1.10;
   const maxBidEUR = Math.max(0, Math.floor(maxBidRaw / 50) * 50);
   const maxBidAED = exchangeRate ? eurToAed(maxBidEUR, exchangeRate) : 0;
 
@@ -102,7 +104,8 @@ export default function QuickCalc() {
   const auctionDuty = maxBidEUR * 0.10;
   const auctionVatBase = maxBidEUR + auctionDuty;
   const auctionVat = auctionVatBase * 0.19;
-  const auctionTotalCost = maxBidEUR + auctionDuty + auctionVat + otherCosts;
+  // Total cost WITHOUT VAT - VAT is recoverable as Vorsteuer
+  const auctionTotalCost = maxBidEUR + auctionDuty + otherCosts;
   const auctionProfit = market2 - auctionTotalCost;
   const auctionProfitPct = market2 > 0 ? (auctionProfit / market2) * 100 : 0;
 
@@ -175,8 +178,8 @@ export default function QuickCalc() {
               </div>
             </div>
 
-            {/* Kosten Breakdown - nur anzeigen wenn Werte eingegeben */}
-            {dealerAED > 0 && market1 > 0 && (
+            {/* Kosten Breakdown - zeigen sobald AED eingegeben */}
+            {dealerAED > 0 && (
               <>
                 <div className={`${cardBg} rounded-2xl p-5 shadow-sm space-y-3`}>
                   <div className={`flex justify-between ${breakdownText}`}>
@@ -189,7 +192,10 @@ export default function QuickCalc() {
                   </div>
                   <div className={`flex justify-between ${breakdownText}`}>
                     <span>EUSt (19%)</span>
-                    <span className={`${breakdownValue} tabular-nums`}>{formatCurrency(vat1)}</span>
+                    <span className={`${breakdownValue} tabular-nums`}>({formatCurrency(vat1)})</span>
+                  </div>
+                  <div className={`text-xs ${theme.textMuted} -mt-2`}>
+                    Vorsteuer - wird bei Verkauf zurückerstattet
                   </div>
                   <div className={`flex justify-between ${breakdownText}`}>
                     <span>Transport</span>
@@ -209,14 +215,16 @@ export default function QuickCalc() {
                   </div>
                 </div>
 
-                {/* Marge */}
-                <div className={`${marginColors.bg} ${marginColors.border} border rounded-2xl p-6 text-center`}>
-                  <div className={`${marginColors.text} text-sm uppercase tracking-wider`}>Deine Marge</div>
-                  <div className={`text-4xl font-bold mt-2 tabular-nums ${marginColors.text}`}>
-                    {formatCurrency(margin1)}
+                {/* Marge - nur anzeigen wenn auch Verkaufspreis eingegeben */}
+                {market1 > 0 && (
+                  <div className={`${marginColors.bg} ${marginColors.border} border rounded-2xl p-6 text-center`}>
+                    <div className={`${marginColors.text} text-sm uppercase tracking-wider`}>Deine Marge</div>
+                    <div className={`text-4xl font-bold mt-2 tabular-nums ${marginColors.text}`}>
+                      {formatCurrency(margin1)}
+                    </div>
+                    <div className={`text-xl mt-1 ${marginColors.text}`}>{marginPct1.toFixed(1)}%</div>
                   </div>
-                  <div className={`text-xl mt-1 ${marginColors.text}`}>{marginPct1.toFixed(1)}%</div>
-                </div>
+                )}
               </>
             )}
           </TabsContent>
@@ -264,7 +272,10 @@ export default function QuickCalc() {
                   </div>
                   <div className={`flex justify-between ${theme.textSecondary}`}>
                     <span>+ EUSt (19%)</span>
-                    <span className="tabular-nums">{formatCurrency(auctionVat)}</span>
+                    <span className="tabular-nums">({formatCurrency(auctionVat)})</span>
+                  </div>
+                  <div className={`text-xs ${theme.textMuted} -mt-1 ml-2`}>
+                    Vorsteuer - zurückerstattet
                   </div>
                   <div className={`flex justify-between ${theme.textSecondary}`}>
                     <span>+ Transport</span>
